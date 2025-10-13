@@ -1,0 +1,14 @@
+.card {
+  border: 1px solid #ccc;
+  padding: 16px;
+  margin: 12px;
+  box-shadow: 0 2px 5px;
+  flex: 1;
+  border-radius: 8px;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+}
