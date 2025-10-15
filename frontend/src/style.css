@@ -1,0 +1,315 @@
+/* ---- Base ---- */
+:root {
+  --bg: #f7f8fa;
+  --card: #ffffff;
+  --text: #0f172a;
+  --muted: #6b7280;
+  --ring: #2563eb20;
+  --primary: #2563eb;
+  --border: #e5e7eb;
+  --radius: 14px;
+  --shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+}
+
+* {
+  box-sizing: border-box;
+}
+html,
+body,
+#root {
+  height: 100%;
+  width: 100%;
+}
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.45 system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue",
+    Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+}
+
+/* ---- Layout ---- */
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.section-title {
+  font-size: 34px;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  margin: 4px 0 16px;
+}
+
+/* ---- Navbar ---- */
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  backdrop-filter: saturate(180%) blur(8px);
+  background: rgba(255, 255, 255, 0.7);
+  border-bottom: 1px solid var(--border);
+}
+.nav-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 10px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* NEW: middle group centered */
+.nav-center {
+  flex: 1; /* take remaining space between left & right */
+  display: flex;
+  justify-content: center; /* center the links */
+  gap: 16px;
+}
+
+/* keep right group pinned to the edge */
+.nav-right {
+  margin-left: 0; /* ensure no leftover auto margin */
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo {
+  display: block;
+  height: 36px;
+  width: auto;
+  object-fit: contain;
+}
+
+.nav a {
+  color: var(--text);
+  text-decoration: none;
+  padding: 8px 10px;
+  border-radius: 10px;
+}
+.nav a:hover {
+  background: var(--ring);
+}
+.nav-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.badge {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* ---- Controls ---- */
+.controls {
+  display: grid;
+  grid-template-columns: 220px 160px 120px;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.select,
+.input {
+  appearance: none;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: #fff;
+  outline: none;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+.select:focus,
+.input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px var(--ring);
+}
+
+/* ---- Cards / Chart ---- */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 16px;
+}
+.card-body {
+  padding: 16px;
+}
+.chart-wrap {
+  height: 380px;
+}
+.card.span-12 {
+  grid-column: span 12;
+}
+@media (min-width: 900px) {
+  .card.span-6 {
+    grid-column: span 6;
+  } /* half width */
+  .card.span-12 {
+    grid-column: span 12;
+  } /* full width */
+}
+
+/* ---- Table ---- */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+.table th,
+.table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.table thead th {
+  text-align: center;
+  font-weight: 600;
+  color: var(--muted);
+  background: #fafafa;
+}
+.table td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- Buttons ---- */
+.btn {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  background: #fff;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.btn:hover {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--ring);
+}
+
+/* ---- Helpers ---- */
+.muted {
+  color: var(--muted);
+}
+.mt-24 {
+  margin-top: 24px;
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 720px) {
+  .controls {
+    grid-template-columns: 1fr 1fr;
+  }
+  .chart-wrap {
+    height: 300px;
+  }
+}
+
+/* ---- App shell (Navbar + Body) ---- */
+.app {
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr; /* header + fill */
+  background: var(--bg);
+}
+
+/* If you wrap <NavBar/> in <header> ... </header> (as in App.tsx) */
+header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #fff;
+  box-shadow: 0 1px 12px rgba(0, 0, 0, 0.06);
+}
+
+/* The scrolling area for pages */
+.content {
+  min-height: 0; /* important for proper overflow calc */
+  overflow: auto; /* page scrolls here, not window */
+  padding: 24px;
+}
+
+/* ---- Controls: responsive grid ---- */
+.controls {
+  display: grid;
+  grid-template-columns: repeat(
+    5,
+    minmax(160px, 1fr)
+  ); /* measurement, field, nodes, lookback, refresh */
+  gap: 12px;
+  margin-bottom: 14px;
+}
+@media (max-width: 960px) {
+  .controls {
+    grid-template-columns: repeat(2, minmax(160px, 1fr));
+  }
+}
+@media (max-width: 720px) {
+  .controls {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---- Chart area height (avoid 100%) ---- */
+.chart-wrap {
+  height: 420px;
+} /* 360–480px works well */
+
+/* ---- Cards spacing ---- */
+.card {
+  /* margin: 16px 0; */
+  overflow: hidden;
+}
+
+/* 3 fixed columns, consistent spacing */
+.gauges-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+/* each cell keeps the same vertical footprint */
+.gauge-cell {
+  display: flex;
+  flex-direction: column;
+}
+
+/* reserve the exact space the Gauge occupies when hidden */
+.gauge-blank {
+  height: 220px; /* same as <Gauge height> */
+  border-radius: 12px; /* optional: invisible placeholder */
+}
+
+/* meta row under each gauge */
+.gauge-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.gauge-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+}
+
+.gauge-label {
+  font-weight: 600;
+}
+
+.gauge-time {
+  margin-left: auto;
+  color: #6b7280;
+  font-size: 12px;
+}
