@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import { InfluxDB, Point } from "@influxdata/influxdb-client";
 import dotenv from "dotenv";
+import sqlite3 from "sqlite3";
 
 dotenv.config();
 
@@ -124,5 +125,193 @@ app.get("/", (req, res) => {
     },
   });
 });
+
+//SQLITE code
+
+app.use(express.json());
+app.use(express.static("public"));
+
+// Helper: format timestamp in ISO‐like format (YYYY‑MM‑DD HH:MM:SS)
+const IST_TIME = (timestamp = Date.now()) => {
+  const now = new Date(timestamp);
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(
+    2,
+    "0"
+  )}-${String(now.getDate()).padStart(2, "0")} ${String(
+    now.getHours()
+  ).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(
+    now.getSeconds()
+  ).padStart(2, "0")}`;
+};
+
+const sqliteDb = new sqlite3.Database("./sensors.db");
+
+// Simulate weather
+function getIndianWeather() {
+  const hour = new Date().getHours();
+  if (hour >= 6 && hour <= 18) {
+    return {
+      temperature: (28 + Math.random() * 7).toFixed(1),
+      humidity: (50 + Math.random() * 35).toFixed(1),
+      pressure: (1008 + Math.random() * 7).toFixed(2),
+    };
+  } else {
+    return {
+      temperature: (25 + Math.random() * 5).toFixed(1),
+      humidity: (70 + Math.random() * 20).toFixed(1),
+      pressure: (1010 + Math.random() * 8).toFixed(2),
+    };
+  }
+}
+
+// On startup, drop & recreate table (clean slate)
+sqliteDb.serialize(() => {
+  sqliteDb.run(`DROP TABLE IF EXISTS weather`, (err) => {
+    if (err) console.error("Drop table error:", err);
+
+    sqliteDb.run(
+      `CREATE TABLE weather (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        timestamp TEXT,
+        temperature REAL,
+        humidity REAL,
+        pressure REAL,
+        node TEXT
+      )`,
+      (err2) => {
+        if (err2) console.error("Create table error:", err2);
+      }
+    );
+  });
+});
+
+const stations = ["Station1", "Station2", "Station3"];
+
+// Insert new data every 2 seconds
+setInterval(() => {
+  const now = IST_TIME();
+  stations.forEach((station) => {
+    const { temperature, humidity, pressure } = getIndianWeather();
+    sqliteDb.run(
+      `INSERT INTO weather (timestamp, temperature, humidity, pressure, node)
+       VALUES (?, ?, ?, ?, ?)`,
+      [now, temperature, humidity, pressure, station],
+      (err) => {
+        if (err) console.error("Insert error:", err);
+      }
+    );
+  });
+}, 2000);
+
+// delete rows older than 1 hour,
+setInterval(() => {
+  const cutoff = IST_TIME(Date.now() - 3600 * 1000); // 1 hour ago
+  sqliteDb.run(`DELETE FROM weather WHERE timestamp < ?`, [cutoff], (err) => {
+    if (err) console.error("Delete error:", err);
+  });
+}, 60 * 1000);
+
+app.get("/api/sqlite/kpi", (req, res) => {
+  sqliteDb.all(
+    `SELECT timestamp as time, temperature as temp, humidity as hum, pressure as press, node
+     FROM weather
+     ORDER BY timestamp DESC
+     LIMIT 60`,
+    [],
+    (err, rows) => {
+      if (err) {
+        console.error("KPI query error:", err);
+        return res.status(500).json({ error: err.message });
+      }
+      const sorted = rows.slice().reverse();
+      const points = sorted.flatMap((row) => {
+        return [
+          {
+            time: row.time,
+            value: +row.temp,
+            node: row.node,
+            field: "temperature",
+          },
+          {
+            time: row.time,
+            value: +row.hum,
+            node: row.node,
+            field: "humidity",
+          },
+          {
+            time: row.time,
+            value: +row.press,
+            node: row.node,
+            field: "pressure",
+          },
+        ];
+      });
+      res.json({ points });
+    }
+  );
+});
+
+app.get("/api/sqlite/latest", (req, res) => {
+  sqliteDb.all(
+    `SELECT * FROM weather WHERE timestamp = (
+       SELECT MAX(timestamp) FROM weather
+     )`,
+    [],
+    (err, rows) => {
+      if (err) {
+        console.error("Latest query error:", err);
+        return res.status(500).json({ error: err.message });
+      }
+
+      const latest = {};
+      rows.forEach((row) => {
+        latest[row.node] = row;
+      });
+
+      return res.json({
+        temperature: latest["Station1"]?.temperature || 0,
+        humidity: latest["Station1"]?.humidity || 0,
+        pressure: latest["Station1"]?.pressure || 0,
+        all: latest,
+      });
+    }
+  );
+});
+
+app.get("/api/sqlite/readings", (req, res) => {
+  sqliteDb.all(
+    `SELECT * FROM weather
+     ORDER BY timestamp DESC
+     LIMIT 60`,
+    [],
+    (err, rows) => {
+      if (err) {
+        console.error("Readings error:", err);
+        return res.status(500).json({ error: err.message });
+      }
+      res.json(rows.slice().reverse());
+    }
+  );
+});
+
+app.get("/api/sqlite/debug", (req, res) => {
+  sqliteDb.get(
+    `SELECT * FROM weather ORDER BY id DESC LIMIT 1`,
+    [],
+    (err, row) => {
+      if (err) {
+        console.error("Debug error:", err);
+        return res.status(500).json({ error: err.message });
+      }
+      res.json({
+        timestamp: row?.timestamp,
+        sample: row,
+      });
+    }
+  );
+});
+
+app.get("/health", (req, res) => res.json({ status: "OK" }));
+app.get("/", (req, res) => res.json({ message: "Weather API OK" }));
 
 app.listen(PORT, () => {});

@@ -3,23 +3,21 @@ import { useMemo } from "react";
 export type KpiPoint = { time: string | number; value: number; node: string };
 
 type Props = {
-  title: string; // "Temperature" | "Pressure" | "Humidity"
-  unit?: string; // "°C" | "psi" | "%"
-  accent?: string; // label color
-  points: KpiPoint[]; // [{ time, value, node }]
-  showTimestamp?: boolean;
-  warnHigh?: number; // threshold for high alert
+  title: string;
+  unit?: string;
+  accent?: string;
+  points: KpiPoint[];
+  warnHigh?: number;
 };
 
-export default function SimpleKpi({
+export default function Kpi({
   title,
   unit = "",
   accent = "#2563eb",
   points,
-  warnHigh = 80, // ✅ DEFAULT: 80 for temp/pressure, 90 for humidity
+  warnHigh = 80,
 }: Props) {
   const { avgNow, maxNode, minNode, hiNodes } = useMemo(() => {
-    // latest point per node
     const latestByNode = new Map<string, KpiPoint>();
     for (const p of points) {
       const prev = latestByNode.get(p.node);
@@ -35,8 +33,6 @@ export default function SimpleKpi({
 
     let maxNode: { node: string; value: number } | undefined;
     let minNode: { node: string; value: number } | undefined;
-    let latestTs: number | undefined;
-
     const hiNodes: string[] = [];
 
     for (const p of latest) {
@@ -44,23 +40,18 @@ export default function SimpleKpi({
         maxNode = { node: p.node, value: p.value };
       if (!minNode || p.value < minNode.value)
         minNode = { node: p.node, value: p.value };
-      const t = +new Date(p.time);
-      if (!latestTs || t > latestTs) latestTs = t;
 
-      // ✅ FIXED: Dynamic warning threshold per field
       const threshold = title === "Humidity" ? 90 : warnHigh;
       if (p.value > threshold) hiNodes.push(p.node);
     }
 
-    const latestLabel = latestTs ? new Date(latestTs).toLocaleTimeString() : "";
-    return { avgNow, maxNode, minNode, latestLabel, hiNodes };
-  }, [points, warnHigh, title]); // ✅ ADDED title dependency
+    return { avgNow, maxNode, minNode, hiNodes };
+  }, [points, warnHigh, title]);
 
   const hasHi = hiNodes.length > 0;
 
   return (
     <div style={{ width: "100%" }}>
-      {/* Content row: left = KPI; right = High alert (if any) */}
       <div
         style={{
           display: "flex",
@@ -69,7 +60,6 @@ export default function SimpleKpi({
           flexWrap: "wrap",
         }}
       >
-        {/* LEFT: KPI */}
         <div style={{ flex: "1 1 260px", minWidth: 220 }}>
           <div
             style={{
@@ -97,14 +87,13 @@ export default function SimpleKpi({
             {maxNode
               ? `Max ${maxNode.node} ${maxNode.value.toFixed(1)}${unit}`
               : "Max —"}{" "}
-            &nbsp;•&nbsp;
+            •
             {minNode
               ? `Min ${minNode.node} ${minNode.value.toFixed(1)}${unit}`
               : "Min —"}
           </div>
         </div>
 
-        {/* RIGHT: compact High Alert */}
         {hasHi && (
           <div
             style={{
@@ -118,16 +107,9 @@ export default function SimpleKpi({
               borderRadius: 10,
               background: "#fee2e2",
               border: "1px solid #ef4444",
-              overflow: "hidden",
             }}
           >
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              style={{ flex: "0 0 18px" }}
-            >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
               <path
                 d="M12 3l9 16H3l9-16Z"
                 stroke="#b91c1c"
@@ -137,32 +119,11 @@ export default function SimpleKpi({
               <path d="M12 9v5" stroke="#b91c1c" strokeWidth="2" />
               <circle cx="12" cy="17" r="1.4" fill="#b91c1c" />
             </svg>
-
             <div style={{ lineHeight: 1.2, minWidth: 0 }}>
-              <div
-                style={{
-                  fontSize: 14,
-                  fontWeight: 800,
-                  color: "#b91c1c",
-                  marginBottom: 2,
-                }}
-              >
-                {/* ✅ FIXED: Dynamic threshold display */}
-                High {title === "Humidity" ? ">" : ">"}{" "}
-                {title === "Humidity" ? 90 : warnHigh}
+              <div style={{ fontSize: 14, fontWeight: 800, color: "#b91c1c" }}>
+                High {title} {title === "Humidity" ? 90 : warnHigh}
               </div>
-              <div
-                title={hiNodes.join(", ")}
-                style={{
-                  fontSize: 12,
-                  color: "#111827",
-                  fontWeight: 600,
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  maxWidth: "100%",
-                }}
-              >
+              <div style={{ fontSize: 12, color: "#111827", fontWeight: 600 }}>
                 {hiNodes.join(", ")}
               </div>
             </div>

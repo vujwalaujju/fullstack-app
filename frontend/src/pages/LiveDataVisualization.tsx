@@ -21,9 +21,10 @@ import {
   Legend,
   Label,
 } from "recharts";
-import Gauge from "../components/Gauge";
-import type { KpiPoint } from "../components/KpiSummary";
-import KpiSummary from "../components/KpiSummary";
+
+import Gauge from "../components/InfluxGauge";
+import type { KpiPoint } from "../components/InfluxKpiSummary";
+import KpiSummary from "../components/InfluxKpiSummary";
 
 type Row = {
   _time: string;

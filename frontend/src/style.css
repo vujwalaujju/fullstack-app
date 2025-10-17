@@ -1,11 +1,14 @@
+@import "primereact/resources/primereact.min.css";
+@import "primeicons/primeicons.css";
 /* ---- Base ---- */
 :root {
   --bg: #f7f8fa;
   --card: #ffffff;
   --text: #0f172a;
-  --muted: #6b7280;
+  --muted: #64748b;
   --ring: #2563eb20;
   --primary: #2563eb;
+  --primary-light: #dbeafe;
   --border: #e5e7eb;
   --radius: 14px;
   --shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
@@ -24,8 +27,9 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font: 16px/1.45 system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue",
+  font: 16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue",
     Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+  transition: background 0.3s ease;
 }
 
 /* ---- Layout ---- */
@@ -33,13 +37,22 @@ body {
   max-width: 1100px;
   margin: 0 auto;
   padding: 24px;
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  transition: box-shadow 0.3s ease;
 }
 
 .section-title {
   font-size: 34px;
   line-height: 1.2;
   letter-spacing: -0.02em;
-  margin: 4px 0 16px;
+  margin: 4px 0 20px;
+  color: var(--text);
+  font-weight: 700;
+  border-bottom: 2px solid var(--primary-light);
+  padding-bottom: 8px;
+  transition: color 0.3s ease;
 }
 
 /* ---- Navbar ---- */
@@ -47,68 +60,87 @@ body {
   position: sticky;
   top: 0;
   z-index: 5;
-  backdrop-filter: saturate(180%) blur(8px);
-  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: saturate(180%) blur(10px);
+  background: rgba(255, 255, 255, 0.9);
   border-bottom: 1px solid var(--border);
+  transition: background 0.3s ease;
 }
 .nav-inner {
   max-width: 1100px;
   margin: 0 auto;
-  padding: 10px 24px;
+  padding: 12px 24px;
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 20px;
 }
 
-/* NEW: middle group centered */
 .nav-center {
-  flex: 1; /* take remaining space between left & right */
+  flex: 1;
   display: flex;
-  justify-content: center; /* center the links */
-  gap: 16px;
+  justify-content: center;
+  gap: 20px;
 }
 
-/* keep right group pinned to the edge */
 .nav-right {
-  margin-left: 0; /* ensure no leftover auto margin */
+  margin-left: 0;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
 }
 
 .logo {
   display: block;
-  height: 36px;
+  height: 40px;
   width: auto;
   object-fit: contain;
+  transition: transform 0.3s ease;
+}
+
+.logo:hover {
+  transform: scale(1.05);
 }
 
 .nav a {
   color: var(--text);
   text-decoration: none;
-  padding: 8px 10px;
-  border-radius: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-weight: 500;
+  transition: all 0.3s ease;
 }
 .nav a:hover {
   background: var(--ring);
+  color: var(--primary);
 }
+
 .nav-right {
   margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: 12px;
 }
+
 .badge {
   font-size: 12px;
   color: var(--muted);
+  background: var(--primary-light);
+  padding: 4px 8px;
+  border-radius: 10px;
+  transition: background 0.3s ease;
+}
+
+.badge:hover {
+  background: var(--ring);
 }
 
 /* ---- Controls ---- */
 .controls {
   display: grid;
-  grid-template-columns: 220px 160px 120px;
-  gap: 12px;
-  margin-bottom: 14px;
+  grid-template-columns: repeat(5, minmax(160px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+  background: var(--card);
+  padding: 16px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  transition: box-shadow 0.3s ease;
 }
 .select,
 .input {
@@ -119,12 +151,14 @@ body {
   border: 1px solid var(--border);
   background: #fff;
   outline: none;
-  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+  font-weight: 500;
+  transition: all 0.3s ease;
 }
 .select:focus,
 .input:focus {
   border-color: var(--primary);
   box-shadow: 0 0 0 4px var(--ring);
+  transform: translateY(-2px);
 }
 
 /* ---- Cards / Chart ---- */
@@ -133,17 +167,24 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
 }
 .cards-grid {
   display: grid;
   grid-template-columns: repeat(12, 1fr);
-  gap: 16px;
+  gap: 20px;
 }
 .card-body {
-  padding: 16px;
+  padding: 20px;
 }
 .chart-wrap {
-  height: 380px;
+  height: 420px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
 }
 .card.span-12 {
   grid-column: span 12;
@@ -151,50 +192,76 @@ body {
 @media (min-width: 900px) {
   .card.span-6 {
     grid-column: span 6;
-  } /* half width */
+  }
   .card.span-12 {
     grid-column: span 12;
-  } /* full width */
+  }
 }
 
 /* ---- Table ---- */
 .table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   overflow: hidden;
   box-shadow: var(--shadow);
-  text-align: center;
+  text-align: left;
+  font-size: 14px;
 }
 .table th,
 .table td {
-  padding: 10px 12px;
+  padding: 12px 16px;
   border-bottom: 1px solid var(--border);
+  transition: background 0.3s ease, color 0.3s ease;
 }
 .table thead th {
-  text-align: center;
+  text-align: left;
   font-weight: 600;
   color: var(--muted);
-  background: #fafafa;
+  background: #f9fafb;
+  border-bottom: 2px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 .table td.num {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
+.table tbody tr {
+  transition: all 0.3s ease;
+}
+.table tbody tr:hover {
+  background: var(--primary-light);
+  transform: translateY(-2px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+.table tbody tr:nth-child(even) {
+  background: #f9fafb;
+}
+.table tbody tr td:first-child {
+  border-left: 4px solid transparent;
+}
+.table tbody tr:hover td:first-child {
+  border-left-color: var(--primary);
+}
 
 /* ---- Buttons ---- */
 .btn {
-  padding: 8px 12px;
+  padding: 10px 16px;
   border: 1px solid var(--border);
   background: #fff;
-  border-radius: 10px;
+  border-radius: 12px;
   cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
 }
 .btn:hover {
   border-color: var(--primary);
   box-shadow: 0 0 0 3px var(--ring);
+  transform: translateY(-2px);
 }
 
 /* ---- Helpers ---- */
@@ -206,49 +273,6 @@ body {
 }
 
 /* ---- Responsive ---- */
-@media (max-width: 720px) {
-  .controls {
-    grid-template-columns: 1fr 1fr;
-  }
-  .chart-wrap {
-    height: 300px;
-  }
-}
-
-/* ---- App shell (Navbar + Body) ---- */
-.app {
-  min-height: 100vh;
-  display: grid;
-  grid-template-rows: auto 1fr; /* header + fill */
-  background: var(--bg);
-}
-
-/* If you wrap <NavBar/> in <header> ... </header> (as in App.tsx) */
-header {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  background: #fff;
-  box-shadow: 0 1px 12px rgba(0, 0, 0, 0.06);
-}
-
-/* The scrolling area for pages */
-.content {
-  min-height: 0; /* important for proper overflow calc */
-  overflow: auto; /* page scrolls here, not window */
-  padding: 24px;
-}
-
-/* ---- Controls: responsive grid ---- */
-.controls {
-  display: grid;
-  grid-template-columns: repeat(
-    5,
-    minmax(160px, 1fr)
-  ); /* measurement, field, nodes, lookback, refresh */
-  gap: 12px;
-  margin-bottom: 14px;
-}
 @media (max-width: 960px) {
   .controls {
     grid-template-columns: repeat(2, minmax(160px, 1fr));
@@ -258,58 +282,81 @@ header {
   .controls {
     grid-template-columns: 1fr;
   }
+  .chart-wrap {
+    height: 300px;
+  }
+  .nav-inner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .nav-right {
+    margin-left: 0;
+  }
+  .table th,
+  .table td {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+  .table thead th {
+    font-size: 14px;
+  }
 }
 
-/* ---- Chart area height (avoid 100%) ---- */
-.chart-wrap {
-  height: 420px;
-} /* 360–480px works well */
-
-/* ---- Cards spacing ---- */
-.card {
-  /* margin: 16px 0; */
-  overflow: hidden;
+/* ---- App shell (Navbar + Body) ---- */
+.app {
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  background: var(--bg);
 }
 
-/* 3 fixed columns, consistent spacing */
+header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #fff;
+  box-shadow: 0 1px 12px rgba(0, 0, 0, 0.06);
+}
+
+.content {
+  min-height: 0;
+  overflow: auto;
+  padding: 24px;
+}
+
+/* 🔥 GAUGES GRID - SAME AS YOUR UI */
 .gauges-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(220px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
 }
-
-/* each cell keeps the same vertical footprint */
 .gauge-cell {
   display: flex;
   flex-direction: column;
+  align-items: center;
 }
-
-/* reserve the exact space the Gauge occupies when hidden */
-.gauge-blank {
-  height: 220px; /* same as <Gauge height> */
-  border-radius: 12px; /* optional: invisible placeholder */
-}
-
-/* meta row under each gauge */
 .gauge-meta {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-top: 8px;
+  margin-top: 12px;
+  font-size: 14px;
 }
-
 .gauge-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 999px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
 }
-
 .gauge-label {
   font-weight: 600;
+  color: var(--text);
 }
-
 .gauge-time {
-  margin-left: auto;
-  color: #6b7280;
+  color: var(--muted);
   font-size: 12px;
+}
+.gauge-blank {
+  height: 220px;
+  width: 100%;
 }

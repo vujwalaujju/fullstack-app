@@ -6,14 +6,13 @@ import type { GaugeSeriesOption } from "echarts/charts";
 type Props = {
   nodeId: string;
   value: number | string | null | undefined;
-  field: "temperature" | "pressure" | "humidity"; // ✅ ADDED HUMIDITY
+  field: "temperature" | "pressure" | "humidity";
   color?: string;
   min?: number;
   max?: number;
   height?: number; // px
 };
 
-// Compose a typed option that includes Gauge support
 type ECOption = ComposeOption<GaugeSeriesOption>;
 
 export default function Gauge({
@@ -28,7 +27,6 @@ export default function Gauge({
   const ref = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<echarts.EChartsType | null>(null);
 
-  // init / dispose once
   useEffect(() => {
     if (!ref.current) return;
     if (!chartRef.current) {
@@ -45,29 +43,23 @@ export default function Gauge({
     }
   }, []);
 
-  // set options when props change
   useEffect(() => {
     if (!chartRef.current) return;
-
-    // ✅ Use undefined instead of null to satisfy Gauge typing
     const numeric =
       value === "" || value === null || value === undefined
         ? undefined
         : Number(value);
 
-    // ✅ FIXED: Units for ALL 3 fields
     const unit =
       field === "pressure" ? "psi" : field === "humidity" ? "%" : "°C";
 
-    // ✅ FIXED: Title for ALL 3 fields
     const title =
       field === "temperature"
         ? "TEMP"
         : field === "pressure"
         ? "PRESS"
-        : "HUMID"; // Short labels
+        : "HUMID";
 
-    // ✅ FIXED: Min/Max defaults for ALL 3 fields
     const defaultMin = field === "humidity" ? 0 : 10;
     const defaultMax = field === "humidity" ? 100 : 100;
 
@@ -79,11 +71,11 @@ export default function Gauge({
       series: [
         {
           type: "gauge",
-          min: min ?? defaultMin, // ✅ Use provided or default
+          min: min ?? defaultMin,
           max: max ?? defaultMax,
           startAngle: 220,
           endAngle: -40,
-          splitNumber: field === "humidity" ? 10 : 9, // ✅ 10 ticks for 0-100%
+          splitNumber: field === "humidity" ? 10 : 9,
           center: ["50%", "60%"],
           radius: "95%",
           progress: {
@@ -99,7 +91,6 @@ export default function Gauge({
             color: "#6b7280",
             distance: 12,
             fontSize: 10,
-            // ✅ Format labels for humidity (0,10,20,...,100)
             formatter: (v: number) => (field === "humidity" ? `${v}%` : `${v}`),
           },
           anchor: { show: true, size: 6, itemStyle: { color: "#374151" } },
@@ -118,11 +109,10 @@ export default function Gauge({
             color,
             fontWeight: 600,
             fontSize: 14,
-            // ✅ Dynamic title based on field
+
             formatter: `{value|${title}}\n{label|${nodeId}}`,
           },
           itemStyle: { color },
-          // ✅ value must be number | undefined (NOT null)
           data: [{ value: numeric, name: String(nodeId) }],
         },
       ],

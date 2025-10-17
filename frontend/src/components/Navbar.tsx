@@ -9,6 +9,8 @@ export default function NavBar() {
         <div className="nav-center">
           <Link to="/">Live Data Visualization</Link>
           <Link to="/LiveDataTable">Live Data Table</Link>
+          <Link to="/alarmdatatable">Alarm Data Table</Link>
+          <Link to="/sqlitedashboard">Alarm Data Visualization</Link>
         </div>
       </div>
     </header>

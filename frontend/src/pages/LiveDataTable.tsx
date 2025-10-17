@@ -102,7 +102,6 @@ export default function LiveDataTable() {
     })();
   }, []);
 
-  // Filter node list based on selected field
   const nodeOptions = useMemo(() => {
     if (field === "temperature")
       return allNodes.filter((n) => n.startsWith("T"));
@@ -111,20 +110,17 @@ export default function LiveDataTable() {
     return allNodes;
   }, [allNodes, field]);
 
-  // Keep only valid nodes after filtering
   useEffect(() => {
     const valid = new Set(nodeOptions);
     setNodes((prev) => prev.filter((n) => valid.has(n)));
   }, [nodeOptions]);
 
-  // 🟡 Auto-select all nodes on load
   useEffect(() => {
     if (nodes.length === 0 && nodeOptions.length > 0) {
       setNodes(nodeOptions);
     }
   }, [nodeOptions]);
 
-  // Fetch data from backend
   async function load() {
     setLoading(true);
     setErr("");
@@ -161,7 +157,6 @@ export default function LiveDataTable() {
     }
   }
 
-  // Load data on field/nodes change or on interval
   useEffect(() => {
     load();
     const id = setInterval(load, 10000);
@@ -206,13 +201,15 @@ export default function LiveDataTable() {
           className="select"
         />
         <Button
+          icon="pi pi-refresh"
           label="Refresh"
           onClick={load}
           disabled={loading}
           className="btn"
         />
         <Button
-          label="Download CSV"
+          icon="pi pi-download"
+          label="Download"
           onClick={() => dtRef.current?.exportCSV()}
           className="btn"
         />
