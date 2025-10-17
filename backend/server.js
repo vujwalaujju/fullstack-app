@@ -204,8 +204,16 @@ setInterval(() => {
 }, 2000);
 
 // delete rows older than 1 hour,
+// setInterval(() => {
+//   const cutoff = IST_TIME(Date.now() - 3600 * 1000);
+//   sqliteDb.run(`DELETE FROM weather WHERE timestamp < ?`, [cutoff], (err) => {
+//     if (err) console.error("Delete error:", err);
+//   });
+// }, 60 * 1000);
+
+//delete rows older than 5minutes,
 setInterval(() => {
-  const cutoff = IST_TIME(Date.now() - 3600 * 1000); // 1 hour ago
+  const cutoff = IST_TIME(Date.now() - 5 * 60 * 1000);
   sqliteDb.run(`DELETE FROM weather WHERE timestamp < ?`, [cutoff], (err) => {
     if (err) console.error("Delete error:", err);
   });
