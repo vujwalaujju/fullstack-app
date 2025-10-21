@@ -164,7 +164,6 @@ function getIndianWeather() {
   }
 }
 
-// On startup, drop & recreate table (clean slate)
 sqliteDb.serialize(() => {
   sqliteDb.run(`DROP TABLE IF EXISTS weather`, (err) => {
     if (err) console.error("Drop table error:", err);
@@ -203,21 +202,13 @@ setInterval(() => {
   });
 }, 2000);
 
-// delete rows older than 1 hour,
-// setInterval(() => {
-//   const cutoff = IST_TIME(Date.now() - 3600 * 1000);
-//   sqliteDb.run(`DELETE FROM weather WHERE timestamp < ?`, [cutoff], (err) => {
-//     if (err) console.error("Delete error:", err);
-//   });
-// }, 60 * 1000);
-
-//delete rows older than 5minutes,
+// Delete data older than 30 minutes for every 2 seconds
 setInterval(() => {
-  const cutoff = IST_TIME(Date.now() - 5 * 60 * 1000);
+  const cutoff = IST_TIME(Date.now() - 30 * 60 * 1000);
   sqliteDb.run(`DELETE FROM weather WHERE timestamp < ?`, [cutoff], (err) => {
     if (err) console.error("Delete error:", err);
   });
-}, 60 * 1000);
+}, 2000);
 
 app.get("/api/sqlite/kpi", (req, res) => {
   sqliteDb.all(
