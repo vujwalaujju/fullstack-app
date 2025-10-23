@@ -203,7 +203,7 @@ export default function AlarmDataTable() {
 
   return (
     <div className="container">
-      <h2 className="section-title">Alarm Data Table (Last 1 Hour)</h2>
+      <h2 className="section-title">Alarm Data Table (Last 30 mins)</h2>
 
       <div className="controls">
         <Dropdown
