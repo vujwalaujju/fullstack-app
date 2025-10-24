@@ -233,7 +233,7 @@ export default function AlarmDataTable() {
         />
         <Button
           icon="pi pi-download"
-          label="Download"
+          label="Export"
           onClick={() => dtRef.current?.exportCSV({ selectionOnly: false })}
           className="btn"
         />
