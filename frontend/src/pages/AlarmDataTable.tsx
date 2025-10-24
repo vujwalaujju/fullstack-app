@@ -252,7 +252,7 @@ export default function AlarmDataTable() {
         rowsPerPageOptions={[10, 20, 50]}
         stripedRows
         size="small"
-        emptyMessage="No data in the last 1 hour. Waiting for updates..."
+        emptyMessage="No data in the last 30 mins."
         className="card table"
         sortField="time"
         sortOrder={-1}
