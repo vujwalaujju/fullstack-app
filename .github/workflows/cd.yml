@@ -66,7 +66,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: backend-build
-          path: backend/build
+          path: backend/
           retention-days: 7
 
   deploy:
