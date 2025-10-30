@@ -71,3 +71,8 @@ jobs:
           name: frontend-build
           path: frontend/build
           merge-multiple: true
+
+      - name: Serve with Nginx
+        run: |
+          sudo cp -r frontend/build/* /var/www/html/
+          sudo systemctl reload nginx || sudo systemctl start nginx
