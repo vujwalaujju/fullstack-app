@@ -67,8 +67,18 @@ jobs:
       - build-backend
     runs-on: self-hosted
     steps:
-      - name: Download a Build Artifact
-        uses: actions/download-artifact@v6.0.0
+      - name: Clean old build folder
+        run: |
+          rm -rf /home/allegis/full_stack_vj_app_/actions-runner/_work/fullstack-app/fullstack-app/frontend/build
+           mkdir -p /home/allegis/full_stack_vj_app_/actions-runner/_work/fullstack-app/fullstack-app/frontend/build
+
+      - name: Download Build Artifact
+        uses: actions/download-artifact@v6
         with:
           name: frontend-build
           path: /home/allegis/full_stack_vj_app_/actions-runner/_work/fullstack-app/fullstack-app/frontend/build
+          merge-multiple: true
+
+      - name: List downloaded files
+        run: |
+          ls -la /home/allegis/full_stack_vj_app_/actions-runner/_work/fullstack-app/fullstack-app/frontend/build/ | head -15
