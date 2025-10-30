@@ -1,3 +1,4 @@
+---
 name: CI/CD Pipeline
 on:
   push:
@@ -57,31 +58,19 @@ jobs:
         run: |
           cd backend
           npm install
+
   deploy:
     needs: [build-frontend, build-backend]
     runs-on: self-hosted
-    env:
-      BACKEND_PATH: /home/runner/myapp/backend
     steps:
-      - name: Download frontend artifact
-        uses: actions/download-artifact@v6.0.0
+      - name: Download a Build Artifact
+        uses: actions/download-artifact@v4
         with:
           name: frontend-build
-          path: ./frontend_build
+          path: frontend/build
+          merge-multiple: true
 
-      - name: Download backend artifact
-        uses: actions/download-artifact@v6.0.0
-        with:
-          name: backend-build
-          path: ./backend_deploy
-
-      - name: Deploy frontend
+      - name: Serve with Nginx(Frontend)
         run: |
-          sudo cp -r ./frontend_build/* /var/www/html/
-          sudo systemctl reload nginx || sudo systemctl start nginx
-
-      - name: Deploy backend
-        run: |
-          rsync -a ./backend_deploy/ $BACKEND_PATH/
-          cd $BACKEND_PATH && npm ci --only=production
-          pm2 reload ecosystem.config.js || pm2 start ecosystem.config.js
+          rsync -av --delete frontend/build/ /var/www/full_stack_vj_app_frontend/
+          # systemctl restart nginx
