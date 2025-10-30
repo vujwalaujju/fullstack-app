@@ -70,5 +70,5 @@ jobs:
       - name: Download a Build Artifact
         uses: actions/download-artifact@v6.0.0
         with:
-          name: frontend-artifact
+          name: frontend-build
           path: frontend/build
