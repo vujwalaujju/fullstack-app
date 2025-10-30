@@ -1,1 +1,120 @@
+name: CD Pipeline
 
+on:
+  push:
+    branches:
+      - Full-stack-Influx-POC
+  pull_request:
+    branches:
+      - Full-stack-Influx-POC
+
+jobs:
+  build-frontend:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Cache frontend dependencies
+        uses: actions/cache@v4
+        with:
+          path: frontend/node_modules
+          key: ${{ runner.os }}-frontend-${{ hashFiles('frontend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-frontend-
+
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          npm install
+
+      - name: Create Frontend .env
+        uses: finnp/create-file-action@v1
+        with:
+          path: frontend/.env
+          contents: ${{ secrets.FRONTEND_ENV }}
+
+      - name: Build frontend
+        run: |
+          cd frontend
+          npm run build
+
+      - name: Upload Frontend Build
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist/
+          retention-days: 7
+
+  build-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Cache backend dependencies
+        uses: actions/cache@v4
+        with:
+          path: backend/node_modules
+          key: ${{ runner.os }}-backend-${{ hashFiles('backend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-backend-
+
+      - name: Install backend dependencies
+        run: |
+          cd backend
+          npm install
+
+      - name: Create Backend .env
+        uses: finnp/create-file-action@v1
+        with:
+          path: /full_stack_vj_app_/backend/.env
+          contents: ${{ secrets.BACKEND_ENV }}
+
+      - name: Upload Backend Source
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-source
+          path: backend/
+          retention-days: 7
+  deploy:
+    needs: [build-frontend, build-backend]
+    runs-on: self-hosted
+    steps:
+      - name: Download frontend
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: /full_stack_vj_app_/frontend
+
+      - name: Download backend
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-source
+          path: /full_stack_vj_app_/backend
+
+      - name: Create backend .env
+        run: echo "${{ secrets.BACKEND_ENV }}" > /full_stack_vj_app_/backend/.env
+
+      - name: Restart backend
+        run: |
+          cd /full_stack_vj_app_/backend
+          npm install --production
+          pm2 restart my-app || pm2 start index.js --name my-app --env production
+
+      - name: Deploy NGINX config
+        run: |
+          sudo cp nginx.conf /etc/nginx/sites-available/fullstack
+          sudo ln -sf /etc/nginx/sites-available/fullstack /etc/nginx/sites-enabled/
+          sudo rm -f /etc/nginx/sites-enabled/default
+          sudo nginx -t && sudo systemctl reload nginx
