@@ -66,13 +66,12 @@ jobs:
     runs-on: self-hosted
     steps:
       - name: Download a Build Artifact
-        uses: actions/download-artifact@v6.0.0
+        uses: actions/download-artifact@v6.0.1
         with:
           name: frontend-build
           path: frontend/build
           merge-multiple: true
-
       - name: Serve with Nginx
         run: |
-          sudo cp -r frontend/build/* /var/www/html/
-          sudo systemctl reload nginx || sudo systemctl start nginx
+          cp -r frontend/build/* /var/www/html/
+          reload nginx || systemctl start nginx
