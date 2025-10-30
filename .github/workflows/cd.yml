@@ -34,10 +34,7 @@ jobs:
           npm install
 
       - name: Create Frontend .env
-        uses: finnp/create-file-action@v1
-        with:
-          path: frontend/.env
-          contents: ${{ secrets.FRONTEND_ENV }}
+        run: echo "${{ secrets.FRONTEND_ENV }}" > frontend/.env
 
       - name: Build frontend
         run: |
@@ -76,10 +73,7 @@ jobs:
           npm install
 
       - name: Create Backend .env
-        uses: finnp/create-file-action@v1
-        with:
-          path: /full_stack_vj_app_/backend/.env
-          contents: ${{ secrets.BACKEND_ENV }}
+        run: echo "${{ secrets.BACKEND_ENV }}" > backend/.env
 
       - name: Upload Backend Source
         uses: actions/upload-artifact@v4
