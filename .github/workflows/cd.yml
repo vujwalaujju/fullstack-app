@@ -37,7 +37,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: frontend-build
-          path: build
+          path: frontend/build
           retention-days: 7
 
   build-backend:
@@ -71,4 +71,4 @@ jobs:
         uses: actions/download-artifact@v6.0.0
         with:
           name: frontend-artifact
-          path: build
+          path: frontend/build
