@@ -85,18 +85,6 @@ jobs:
     needs: [build-frontend, build-backend]
     runs-on: self-hosted
     steps:
-      - name: Download frontend
-        uses: actions/download-artifact@v4
-        with:
-          name: frontend-dist
-          path: /full_stack_vj_app_/frontend
-
-      - name: Download backend
-        uses: actions/download-artifact@v4
-        with:
-          name: backend-source
-          path: /full_stack_vj_app_/backend
-
       - name: Create backend .env
         run: echo "${{ secrets.BACKEND_ENV }}" > /full_stack_vj_app_/backend/.env
 
