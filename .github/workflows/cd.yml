@@ -1,4 +1,3 @@
----
 name: CI/CD Pipeline
 on:
   push:
@@ -13,10 +12,12 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "20"
+
       - name: Cache frontend dependencies
         uses: actions/cache@v4
         with:
@@ -24,15 +25,17 @@ jobs:
           key: ${{ runner.os }}-frontend-${{ hashFiles('frontend/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-frontend-
+
       - name: Install frontend dependencies
         run: |
           cd frontend
-          npm install
+          npm ci
 
       - name: Build frontend
         run: |
           cd frontend
           npm run build
+
       - name: Archive frontend artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -45,10 +48,12 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "20"
+
       - name: Cache backend dependencies
         uses: actions/cache@v4
         with:
@@ -56,22 +61,46 @@ jobs:
           key: ${{ runner.os }}-backend-${{ hashFiles('backend/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-backend-
+
       - name: Install backend dependencies
         run: |
           cd backend
-          npm install
+          npm ci
 
   deploy:
     needs: [build-frontend, build-backend]
     runs-on: self-hosted
     steps:
-      - name: Download a Build Artifact
-        uses: actions/download-artifact@v6.0.0
+      - name: Download frontend build artifact
+        uses: actions/download-artifact@v6
         with:
           name: frontend-build
           path: frontend/build
           merge-multiple: true
-      - name: Serve with Nginx
+
+      - name: Serve with Nginx (safe)
         run: |
-          cp -r frontend/build/* /var/www/html/
-          reload nginx || systemctl start nginx
+          set -euo pipefail
+
+          BUILD_DIR=frontend/build
+          TARGET=/var/www/html
+          WEB_USER=www-data    
+          RSYNC_OPTS="-az --delete"
+
+          if [ ! -d "$BUILD_DIR" ]; then
+            echo "Build directory not found: $BUILD_DIR" >&2
+            exit 1
+          fi
+
+          sudo nginx -t
+
+          sudo rsync $RSYNC_OPTS --chown=${WEB_USER}:${WEB_USER} "$BUILD_DIR"/ "$TARGET"/
+          if sudo nginx -t; then
+            if ! sudo systemctl reload nginx; then
+              echo "nginx reload failed; attempting to start nginx"
+              sudo systemctl start nginx
+            fi
+          else
+            echo "nginx config invalid after deploy; aborting and exiting with non-zero" >&2
+            exit 1
+          fi
