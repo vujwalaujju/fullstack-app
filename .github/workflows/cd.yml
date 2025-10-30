@@ -1,5 +1,5 @@
+---
 name: CD Pipeline
-
 on:
   push:
     branches:
@@ -7,19 +7,16 @@ on:
   pull_request:
     branches:
       - Full-stack-Influx-POC
-
 jobs:
   build-frontend:
     runs-on: self-hosted
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-
       - name: Cache frontend dependencies
         uses: actions/cache@v4
         with:
@@ -27,28 +24,25 @@ jobs:
           key: ${{ runner.os }}-frontend-${{ hashFiles('frontend/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-frontend-
-
       - name: Install frontend dependencies
         run: |
           cd frontend
           npm install
-
+          
       - name: Build frontend
         run: |
           cd frontend
           npm run build
-
+          
   build-backend:
     runs-on: self-hosted
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-
       - name: Cache backend dependencies
         uses: actions/cache@v4
         with:
@@ -56,36 +50,16 @@ jobs:
           key: ${{ runner.os }}-backend-${{ hashFiles('backend/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-backend-
-
       - name: Install backend dependencies
         run: |
           cd backend
           npm install
-
-
+          
   deploy:
-    needs: [build-frontend, build-backend]
+    needs:
+      - build-frontend
+      - build-backend
     runs-on: self-hosted
     steps:
-    - name: Download a Build Artifact
-      uses: actions/download-artifact@v6.0.0
-
-       
-      # - name: Create backend .env
-      #   run: echo "${{ secrets.BACKEND_ENV }}" >  backend/.env
-        
-      # - name: Create Frontend .env
-      #   run: echo "${{ secrets.FRONTEND_ENV }}" > frontend/.env
-      
-      # - name: Restart backend
-      #   run: |
-      #     cd /full_stack_vj_app_/backend
-      #     npm install --production
-      #     pm2 restart my-app || pm2 start index.js --name my-app --env production
-
-      # - name: Deploy NGINX config
-      #   run: |
-      #     sudo cp nginx.conf /etc/nginx/sites-available/fullstack
-      #     sudo ln -sf /etc/nginx/sites-available/fullstack /etc/nginx/sites-enabled/
-      #     sudo rm -f /etc/nginx/sites-enabled/default
-          sudo nginx -t && sudo systemctl reload nginx
+      - name: Download a Build Artifact
+        uses: actions/download-artifact@v6.0.0
