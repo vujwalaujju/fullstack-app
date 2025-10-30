@@ -10,7 +10,7 @@ on:
 
 jobs:
   build-frontend:
-    runs-on: self-host
+    runs-on: self-hosted
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -44,7 +44,7 @@ jobs:
           retention-days: 7
 
   build-backend:
-    runs-on: self-host
+    runs-on: self-hosted
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
