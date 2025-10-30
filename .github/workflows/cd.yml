@@ -69,8 +69,9 @@ jobs:
           name: frontend-build
           path: frontend/build
           merge-multiple: true
-
-      - name: Serve with Nginx(Frontend)
-        run: |
-          rsync -av --delete frontend/build/ /var/www/full_stack_vj_app_frontend/
-          systemctl reload nginx
+      - name: Download a Build Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-build
+          path: backend/build
+          merge-multiple: true
