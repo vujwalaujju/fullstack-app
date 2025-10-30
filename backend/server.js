@@ -7,7 +7,7 @@ import sqlite3 from "sqlite3";
 dotenv.config();
 
 const app = express();
-const PORT = 5297;
+const PORT = 5296;
 
 app.use(
   cors({
