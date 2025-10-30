@@ -58,17 +58,19 @@ jobs:
         run: |
           cd backend
           npm install
+          
   deploy:
     needs: [build-frontend, build-backend]
     runs-on: self-hosted
     steps:
       - name: Download a Build Artifact
-        uses: actions/download-artifact@v6.0.0
+        uses: actions/download-artifact@v4
         with:
           name: frontend-build
           path: frontend/build
           merge-multiple: true
-      - name: Serve with Nginx
+          
+      - name: Serve with Nginx(Frontend)
         run: |
-          cp -r frontend/build/* /var/www/html/
-          reload nginx || systemctl start nginx
+          rsync -av --delete frontend/build/ /var/www/react-app/
+          # systemctl restart nginx
