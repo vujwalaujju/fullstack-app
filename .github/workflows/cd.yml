@@ -72,5 +72,5 @@ jobs:
           
       - name: Serve with Nginx(Frontend)
         run: |
-          sudo rsync -av --delete frontend/build/ /var/www/full_stack_vj_app_frontend/
-          sudo systemctl restart nginx
+          rsync -av --delete frontend/build/ /var/www/full_stack_vj_app_frontend/
+          systemctl reload nginx
