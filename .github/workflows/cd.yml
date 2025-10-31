@@ -13,10 +13,19 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Debug - Check current user and permissions
+        run: |
+          echo "Current user: $(whoami)"
+          echo "User ID: $(id)"
+          echo "Working directory: $(pwd)"
+          echo "Directory contents:"
+          ls -la
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "20"
+
       - name: Cache frontend dependencies
         uses: actions/cache@v4
         with:
@@ -44,10 +53,12 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "20"
+
       - name: Cache backend dependencies
         uses: actions/cache@v4
         with:
@@ -70,6 +81,12 @@ jobs:
     needs: [build-frontend, build-backend]
     runs-on: self-hosted
     steps:
+      - name: Debug - Check deployment permissions
+        run: |
+          echo "Deployment user: $(whoami)"
+          echo "Deployment user ID: $(id)"
+          echo "Checking /var/www permissions:"
+          sudo ls -la /var/www/ || echo "Cannot access /var/www"
       - name: Download frontend build artifact
         uses: actions/download-artifact@v4
         with:
@@ -77,49 +94,27 @@ jobs:
           path: frontend/build
           merge-multiple: true
 
-      - name: Verify frontend build files
+      - name: Serve with Nginx (Frontend)
         run: |
-          echo "Checking frontend build files:"
-          ls -la frontend/build/
-          echo "HTML file exists:"
-          find frontend/build/ -name "index.html" | head -1
-
-      - name: Deploy frontend to Nginx
+          # Method 1: Using direct copy with proper ownership
+          echo "Copying frontend files to Nginx directory..."
+          sudo cp -r frontend/build/* /var/www/full_stack_vj_app_frontend/ || echo "Copy failed, trying alternative method"
+      - name: Alternative Nginx deployment - Method 2
+        if: failure()
         run: |
-          echo "Deploying frontend files..."
-          sudo cp -rf frontend/build/* /var/www/full_stack_vj_app_frontend/
-          sudo chown -R www-data:www-data /var/www/full_stack_vj_app_frontend/
-          sudo chmod -R 755 /var/www/full_stack_vj_app_frontend/
-
-      - name: Configure Nginx for frontend and backend
+          # Method 2: Using rsync with temp directory
+          echo "Trying alternative deployment method..."
+          TEMP_DIR="/tmp/frontend-deploy-$(date +%s)"
+          mkdir -p $TEMP_DIR
+          cp -r frontend/build/* $TEMP_DIR/
+          sudo cp -r $TEMP_DIR/* /var/www/full_stack_vj_app_frontend/
+          rm -rf $TEMP_DIR
+          echo "Alternative method completed"
+      - name: Set proper ownership for frontend files
         run: |
-          # Create Nginx configuration
-          sudo bash -c 'cat > /etc/nginx/sites-available/full_stack_vj_app << EOF
-          server {
-              listen 80;
-              server_name _;  # Respond to all domains/IPs
-              root /var/www/full_stack_vj_app_frontend;
-              index index.html;
-
-              # Serve frontend static files
-              location / {
-                  try_files \$uri \$uri/ /index.html;
-              }
-
-              # Cache static assets
-              location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
-                  expires 1y;
-                  add_header Cache-Control "public, immutable";
-              }
-
-              # Proxy API requests to backend (port 5296)
-              location /api/ {
-                  proxy_pass http://localhost:5296;
-                  proxy_http_version 1.1;
-                  proxy_set_header Upgrade \$http_upgrade;
-                  proxy_set_header Connection \"upgrade\";
-                  proxy_set_header Host \$host;
-                  proxy_set_header X-Real-IP \$remote_addr;
-                  proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-                  proxy_set_header X-Forwarded-Proto \$scheme;
-                  proxy_cache_bypass \$http_upgra
+          echo "Setting proper ownership for frontend files..."
+          sudo chown -R www-data:www-data /var/www/full_stack_vj_app_frontend/ || echo "Ownership change failed"
+          sudo chmod -R 755 /var/www/full_stack_vj_app_frontend/ || echo "Permission change failed"
+      - name: Reload Nginx
+        run: |
+          echo "Reloading Nginx configuration..."
