@@ -30,6 +30,9 @@ jobs:
         run: |
           cd frontend
           npm install
+      - name: Copy .env
+        run: |
+          cp /frontend/.env frontend
       - name: Build frontend
         run: |
           cd frontend
