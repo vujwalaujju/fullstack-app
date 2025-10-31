@@ -80,18 +80,18 @@ jobs:
         with:
           name: backend-build
           path: $HOME/full_stack_vj_app_/actions-runner/_work/fullstack-app/fullstack-app/backend
-      - name: Deploy with PM2 (Auto-Install)
+      - name: Deploy with Local PM2
         run: |
           cd "$HOME/full_stack_vj_app_/actions-runner/_work/fullstack-app/fullstack-app/backend"
 
-          # INSTALL PM2 IF MISSING
-          if ! command -v pm2 &> /dev/null; then
-            echo "PM2 not found. Installing globally..."
-            npm install -g pm2
+          # Install pm2 LOCALLY if not in node_modules
+          if [ ! -d "node_modules/pm2" ]; then
+            echo "Installing pm2 locally..."
+            npm install pm2
           fi
 
-          # RESTART OR START APP
-          pm2 restart fullstack-backend || pm2 start server.js --name fullstack-backend
+          # Use local pm2 via npx
+          npx pm2 restart fullstack-backend || npx pm2 start server.js --name fullstack-backend
 
-          echo "DEPLOY SUCCESSFUL"
-          pm2 status
+          echo "DEPLOYED with local PM2"
+          npx pm2 status
