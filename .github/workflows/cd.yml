@@ -80,3 +80,7 @@ jobs:
         with:
           name: backend-build
           path: $HOME/full_stack_vj_app_/actions-runner/_work/fullstack-app/fullstack-app/backend
+      - name: Deploy with PM2
+        run: |
+          cd "$HOME/full_stack_vj_app_/actions-runner/_work/fullstack-app/fullstack-app/backend"
+          pm2 restart server.js --name "fullstack-backend" || pm2 start server.js --name "fullstack-backend"
