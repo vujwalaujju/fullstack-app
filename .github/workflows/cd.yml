@@ -58,6 +58,7 @@ jobs:
         run: |
           cd backend
           npm install
+          npm install -g pm2
       - name: Archive backend artifacts
         uses: actions/upload-artifact@v4
         with:
