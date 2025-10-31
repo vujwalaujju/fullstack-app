@@ -28,6 +28,12 @@ jobs:
         run: |
           cd frontend
           npm install
+      - name: copy .env files
+        env:
+          BACKEND_ENV: ${{ secrets.BACKEND_ENV }}
+          FRONTEND_ENV: ${{ secrets.FRONTEND_ENV }}
+        run: |
+
       - name: Build frontend
         run: |
           cd frontend
@@ -80,6 +86,12 @@ jobs:
         with:
           name: backend-build
           path: $HOME/full_stack_vj_app_/actions-runner/_work/fullstack-app/fullstack-app/backend
+
+      - name: Serve with Nginx(Frontend)
+        run: |
+          sudo rsync -av --delete frontend/build/ /var/www/full_stack_vj_app_frontend/
+          sudo systemctl reload nginx
+
       - name: Deploy with Local PM2
         run: |
           cd "$HOME/full_stack_vj_app_/actions-runner/_work/fullstack-app/fullstack-app/backend"
