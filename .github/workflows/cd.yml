@@ -58,7 +58,6 @@ jobs:
         run: |
           cd backend
           npm install
-          npm install -g pm2
       - name: Archive backend artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -81,7 +80,18 @@ jobs:
         with:
           name: backend-build
           path: $HOME/full_stack_vj_app_/actions-runner/_work/fullstack-app/fullstack-app/backend
-      - name: Deploy with PM2
+      - name: Deploy with PM2 (Auto-Install)
         run: |
           cd "$HOME/full_stack_vj_app_/actions-runner/_work/fullstack-app/fullstack-app/backend"
-          pm2 restart server.js --name "fullstack-backend" || pm2 start server.js --name "fullstack-backend"
+
+          # INSTALL PM2 IF MISSING
+          if ! command -v pm2 &> /dev/null; then
+            echo "PM2 not found. Installing globally..."
+            npm install -g pm2
+          fi
+
+          # RESTART OR START APP
+          pm2 restart fullstack-backend || pm2 start server.js --name fullstack-backend
+
+          echo "DEPLOY SUCCESSFUL"
+          pm2 status
