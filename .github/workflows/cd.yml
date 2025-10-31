@@ -84,14 +84,10 @@ jobs:
         run: |
           cd "$HOME/full_stack_vj_app_/actions-runner/_work/fullstack-app/fullstack-app/backend"
 
-          # Install pm2 LOCALLY if not in node_modules
           if [ ! -d "node_modules/pm2" ]; then
-            echo "Installing pm2 locally..."
             npm install pm2
           fi
 
-          # Use local pm2 via npx
           npx pm2 restart fullstack-backend || npx pm2 start server.js --name fullstack-backend
 
-          echo "DEPLOYED with local PM2"
           npx pm2 status
