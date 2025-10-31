@@ -79,4 +79,4 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: backend-build
-          path: ~/full_stack_vj_app_/actions-runner/_work/fullstack-app/fullstack-app/backend
+          path: $HOME/full_stack_vj_app_/actions-runner/_work/fullstack-app/fullstack-app/backend
