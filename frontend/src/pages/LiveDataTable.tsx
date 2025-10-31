@@ -10,7 +10,7 @@ import {
 import { Button } from "primereact/button";
 import "../style.css";
 
-const API = import.meta.env.VITE_BACKEND_URL || "http://localhost:5297";
+const API = import.meta.env.VITE_BACKEND_URL || "http://localhost:5296";
 
 type Row = {
   field: "temperature" | "pressure" | "humidity";

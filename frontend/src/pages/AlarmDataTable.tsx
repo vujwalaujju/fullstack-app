@@ -12,7 +12,7 @@ import { Button } from "primereact/button";
 import axios from "axios";
 import "../style.css";
 
-const API_BASE = "http://localhost:5297/api/sqlite";
+const API_BASE = "http://localhost:5296/api/sqlite";
 
 type Row = {
   field: "temperature" | "pressure" | "humidity";

@@ -18,7 +18,7 @@ import {
 import { Card } from "primereact/card";
 import { Dropdown, type DropdownChangeEvent } from "primereact/dropdown";
 
-const API_BASE = "http://localhost:5297/api/sqlite";
+const API_BASE = "http://localhost:5296/api/sqlite";
 
 type KpiPoint = { time: string | number; value: number; node: string };
 type Row = {
