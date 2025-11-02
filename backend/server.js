@@ -73,22 +73,26 @@ app.get("/api/influx/measurements", (req, res) => {
 
 app.get("/api/influx/tag-values", async (req, res) => {
   try {
-    const queryApi = client.getQueryApi(influxOrg);
-    const fluxQuery = `
-      from(bucket: "${influxBucket}")
-        |> range(start: -1h)
-        |> keep(columns: ["sensor_id"])
-        |> distinct()
-        |> sort()
+    const { measurement = "weather", tag = "sensor_id" } = req.query;
+
+    const query = `
+      import "influxdata/influxdb/schema"
+      schema.tagValues(
+        bucket: "${influxBucket}",
+        tag: "${tag}",
+        predicate: (r) => r._measurement == "${measurement}"
+      )
     `;
-    const result = await queryApi.collectRows(fluxQuery);
-    const values = [
-      ...new Set(result.map((row) => row.sensor_id).filter(Boolean)),
-    ];
-    res.json(values.length ? values : sensors);
-  } catch (error) {
-    console.error("Tag-values error:", error);
-    res.json(sensors);
+
+    const rows = await queryApi.collectRows(query);
+    const values = [...new Set(rows.map((r) => r._value))]
+      .filter(Boolean)
+      .sort();
+
+    res.json(values);
+  } catch (err) {
+    console.error("Tag values error:", err);
+    res.status(500).json({ error: err.message });
   }
 });
 
@@ -125,19 +129,21 @@ app.get("/api/influx/latest", async (req, res) => {
 app.get("/api/influx/query", async (req, res) => {
   try {
     const { field, range = "-1h", limit = "8000" } = req.query;
-    const queryApi = client.getQueryApi(influxOrg);
-    const fluxQuery = `
+    if (!field) throw new Error("Missing field");
+
+    const query = `
       from(bucket: "${influxBucket}")
         |> range(start: ${range})
+        |> filter(fn: (r) => r._measurement == "weather")
         |> filter(fn: (r) => r._field == "${field}")
-        |> filter(fn: (r) => exists r._value)
         |> limit(n: ${limit})
     `;
-    const result = await queryApi.collectRows(fluxQuery);
-    res.json(result);
-  } catch (error) {
-    console.error("Query error:", error);
-    res.status(500).json({ error: error.message });
+
+    const rows = await queryApi.collectRows(query);
+    res.json(rows);
+  } catch (err) {
+    console.error("Query error:", err);
+    res.status(500).json({ error: err.message });
   }
 });
 
