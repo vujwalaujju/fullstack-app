@@ -98,16 +98,26 @@ app.get("/api/influx/latest", async (req, res) => {
       from(bucket: "${influxBucket}")
         |> range(start: -1h)
         |> filter(fn: (r) => r._measurement == "weather")
+        |> last()
         |> pivot(rowKey: ["_time"], columnKey: ["_field"], valueColumn: "_value")
         |> group(columns: ["sensor_id"])
-        |> last()
         |> keep(columns: ["sensor_id", "temperature", "humidity", "pressure"])
     `;
 
     const rows = await queryApi.collectRows(query);
-    res.json(rows.map((r) => ({ node: r.sensor_id, ...r })));
+
+    const result = rows
+      .map((r) => ({
+        node: r.sensor_id,
+        temperature: r.temperature,
+        humidity: r.humidity,
+        pressure: r.pressure,
+      }))
+      .filter((r) => r.node);
+
+    res.json(result);
   } catch (err) {
-    console.error("Query error:", err);
+    console.error("Query error:", err.message);
     res.status(500).json({ error: err.message });
   }
 });
