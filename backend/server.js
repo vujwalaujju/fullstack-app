@@ -314,4 +314,7 @@ app.get("/api/sqlite/debug", (req, res) => {
 app.get("/health", (req, res) => res.json({ status: "OK" }));
 app.get("/", (req, res) => res.json({ message: "Weather API OK" }));
 
-app.listen(PORT, () => {});
+// app.listen(PORT, () => {});
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Weather API running at http://0.0.0.0:${PORT}`);
+});
