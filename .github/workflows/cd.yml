@@ -79,9 +79,9 @@ jobs:
         run: |
           cd backend
 
-          echo "INFLUX_TOKEN= ${{secrets.INFLUX_TOKEN}}" >> .env
+          echo "INFLUX_TOKEN=${{secrets.INFLUX_TOKEN}}" >> .env
           echo "INFLUX_ORG=${{secrets.INFLUX_ORG}}" >> .env
-          echo "INFLUX_BUCKET= $ {{secrets.INFLUX_BUCKET}}" >> .env
+          echo "INFLUX_BUCKET=${{secrets.INFLUX_BUCKET}}" >> .env
           echo "INFLUX_URL= ${{secrets.INFLUX_URL}}" >> .env
 
       - name: Archive backend artifacts
