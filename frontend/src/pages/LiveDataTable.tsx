@@ -69,7 +69,6 @@ async function query(
   nodes: string[]
 ): Promise<Row[]> {
   const params = new URLSearchParams({
-    measurement: "weather",
     field,
     range: "-1h",
     limit: "8000",
