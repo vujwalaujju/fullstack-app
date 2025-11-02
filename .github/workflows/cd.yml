@@ -79,10 +79,16 @@ jobs:
         run: |
           cd backend
 
-          echo "INFLUX_TOKEN=${{secrets.INFLUX_TOKEN}}" >> .env
-          echo "INFLUX_ORG=${{secrets.INFLUX_ORG}}" >> .env
-          echo "INFLUX_BUCKET=${{secrets.INFLUX_BUCKET}}" >> .env
-          echo "INFLUX_URL= ${{secrets.INFLUX_URL}}" >> .env
+          # Overwrite .env completely (no duplicates!)
+          cat > .env << EOF
+          INFLUX_URL=${{ secrets.INFLUX_URL }}
+          INFLUX_TOKEN=${{ secrets.INFLUX_TOKEN }}
+          INFLUX_ORG=${{ secrets.INFLUX_ORG }}
+          INFLUX_BUCKET=${{ secrets.INFLUX_BUCKET }}
+          EOF
+
+              echo ".env created:"
+              cat .env
 
       - name: Archive backend artifacts
         uses: actions/upload-artifact@v4
