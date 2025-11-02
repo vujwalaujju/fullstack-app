@@ -91,6 +91,26 @@ app.get("/api/influx/tag-values", async (req, res) => {
   }
 });
 
+app.get("/api/influx/latest", async (req, res) => {
+  try {
+    const query = `
+      from(bucket: "${process.env.INFLUX_BUCKET}")
+        |> range(start: -10m)
+        |> filter(fn: (r) => r._measurement == "weather")
+        |> pivot(rowKey: ["_time"], columnKey: ["_field"], valueColumn: "_value")
+        |> group(columns: ["node"])
+        |> last()
+        |> keep(columns: ["node", "temperature", "humidity", "pressure"])
+    `;
+
+    const rows = await queryApi.collectRows(query);
+    res.json(rows);
+  } catch (error) {
+    console.error("InfluxDB query failed:", error);
+    res.status(500).json({ error: "Failed to query InfluxDB" });
+  }
+});
+
 app.get("/api/influx/query", async (req, res) => {
   try {
     const { field, range = "-1h", limit = "8000" } = req.query;
