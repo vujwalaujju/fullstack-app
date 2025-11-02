@@ -17,6 +17,7 @@ type Row = {
   field: "temperature" | "pressure" | "humidity";
   node: string;
   time: string;
+  value?: number;
 };
 
 const FIELD_OPTS = [
@@ -95,6 +96,7 @@ async function query(
         field,
         node: String(r.sensor_id ?? ""),
         time: r._time as string,
+        value: r._value,
       }));
   } catch (error) {
     console.error("Query fetch error:", error);
@@ -236,6 +238,7 @@ export default function LiveDataTable() {
             ? "Pressure"
             : "Humidity",
         timeLabel: new Date(r.time).toLocaleString(),
+        value: r.value,
       })),
     [rows]
   );
@@ -294,6 +297,12 @@ export default function LiveDataTable() {
         <Column field="fieldLabel" header="Field" sortable />
         <Column field="node" header="Node" sortable />
         <Column field="timeLabel" header="Time" sortable />
+        <Column
+          field="value"
+          header="Value"
+          body={(row) => row.value?.toFixed(2) ?? "—"}
+          sortable
+        />
       </DataTable>
     </div>
   );
