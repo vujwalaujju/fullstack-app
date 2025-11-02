@@ -77,6 +77,16 @@ jobs:
         run: |
           cd backend
           npm install
+
+      - name: Create .env file
+        run: |
+          cd backend
+
+          echo "INFLUX_TOKEN= ${{secrets.INFLUX_TOKEN}}" >> .env
+          echo "INFLUX_ORG=${{secrets.INFLUX_ORG}}" >> .env
+          echo "INFLUX_BUCKET= $ {{secrets.INFLUX_BUCKET}}" >> .env
+          echo "INFLUX_URL= ${{secrets.INFLUX_URL}}" >> .env
+
       - name: Archive backend artifacts
         uses: actions/upload-artifact@v4
         with:
