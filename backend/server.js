@@ -32,6 +32,7 @@ const influxBucket = process.env.INFLUX_BUCKET || "weather";
 
 const client = new InfluxDB({ url: influxUrl, token: influxToken });
 const writeApi = client.getWriteApi(influxOrg, influxBucket);
+const queryApi = client.getQueryApi(influxOrg);
 
 const sensors = ["T1", "T2", "T3", "P1", "P2", "P3", "H1", "H2"];
 const types = { T: "temperature", P: "pressure", H: "humidity" };
@@ -93,36 +94,21 @@ app.get("/api/influx/tag-values", async (req, res) => {
 
 app.get("/api/influx/latest", async (req, res) => {
   try {
-    console.log("Querying InfluxDB...");
-
     const query = `
-      from(bucket: "${process.env.INFLUX_BUCKET}")
+      from(bucket: "${influxBucket}")
         |> range(start: -1h)
         |> filter(fn: (r) => r._measurement == "weather")
         |> pivot(rowKey: ["_time"], columnKey: ["_field"], valueColumn: "_value")
-        |> group(columns: ["node"])
+        |> group(columns: ["sensor_id"])
         |> last()
-        |> keep(columns: ["node", "temperature", "humidity", "pressure"])
+        |> keep(columns: ["sensor_id", "temperature", "humidity", "pressure"])
     `;
 
-    console.log("Flux Query:", query);
-    console.log("Bucket:", process.env.INFLUX_BUCKET);
-    console.log("Org:", process.env.INFLUX_ORG);
-
     const rows = await queryApi.collectRows(query);
-    console.log("Query result:", rows);
-
-    if (!rows || rows.length === 0) {
-      return res.json([]);
-    }
-
-    res.json(rows);
+    res.json(rows.map((r) => ({ node: r.sensor_id, ...r })));
   } catch (err) {
-    console.error("QUERY FAILED:", err.message);
-    console.error("Full error:", err);
-    res
-      .status(500)
-      .json({ error: "Failed to query InfluxDB", details: err.message });
+    console.error("Query error:", err);
+    res.status(500).json({ error: err.message });
   }
 });
 
