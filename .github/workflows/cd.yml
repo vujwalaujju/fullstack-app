@@ -39,9 +39,6 @@ jobs:
           echo "VITE_BACKEND_URL=${{ secrets.VITE_BACKEND_URL }}" >> .env
           echo "VITE_FRONTEND_URL=${{ secrets.VITE_FRONTEND_URL }}" >> .env
           echo "VITE_INFLUX_URL=${{ secrets.VITE_INFLUX_URL }}" >> .env
-          echo "INFLUX_TOKEN= ${{secrets.INFLUX_TOKEN}}" >> .env
-          echo "INFLUX_ORG=${{secrets.INFLUX_ORG}}" >> .env
-          echo "INFLUX_BUCKET= $ {{secrets.INFLUX_BUCKET}}" >> .env
 
       - name: Build frontend
         run: |
