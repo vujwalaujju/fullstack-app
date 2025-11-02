@@ -93,9 +93,11 @@ app.get("/api/influx/tag-values", async (req, res) => {
 
 app.get("/api/influx/latest", async (req, res) => {
   try {
+    console.log("Querying InfluxDB...");
+
     const query = `
       from(bucket: "${process.env.INFLUX_BUCKET}")
-        |> range(start: -10m)
+        |> range(start: -1h)
         |> filter(fn: (r) => r._measurement == "weather")
         |> pivot(rowKey: ["_time"], columnKey: ["_field"], valueColumn: "_value")
         |> group(columns: ["node"])
@@ -103,11 +105,24 @@ app.get("/api/influx/latest", async (req, res) => {
         |> keep(columns: ["node", "temperature", "humidity", "pressure"])
     `;
 
+    console.log("Flux Query:", query);
+    console.log("Bucket:", process.env.INFLUX_BUCKET);
+    console.log("Org:", process.env.INFLUX_ORG);
+
     const rows = await queryApi.collectRows(query);
+    console.log("Query result:", rows);
+
+    if (!rows || rows.length === 0) {
+      return res.json([]);
+    }
+
     res.json(rows);
-  } catch (error) {
-    console.error("InfluxDB query failed:", error);
-    res.status(500).json({ error: "Failed to query InfluxDB" });
+  } catch (err) {
+    console.error("QUERY FAILED:", err.message);
+    console.error("Full error:", err);
+    res
+      .status(500)
+      .json({ error: "Failed to query InfluxDB", details: err.message });
   }
 });
 
