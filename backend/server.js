@@ -28,7 +28,7 @@ app.use(express.static("public"));
 const influxUrl = process.env.INFLUX_URL || "http://localhost:8086";
 const influxToken = process.env.INFLUX_TOKEN || "";
 const influxOrg = process.env.INFLUX_ORG || "actalent";
-const influxBucket = process.env.INFLUX_BUCKET || "weather_update";
+const influxBucket = process.env.INFLUX_BUCKET || "weather";
 
 const client = new InfluxDB({ url: influxUrl, token: influxToken });
 const writeApi = client.getWriteApi(influxOrg, influxBucket);
@@ -52,6 +52,7 @@ setInterval(() => {
       .floatField(type, value)
       .timestamp(new Date());
     writeApi.writePoint(point);
+    console.log(`Writing: ${id} ${type}=${value.toFixed(2)}`);
   });
   writeApi
     .flush()
