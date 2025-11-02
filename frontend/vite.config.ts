@@ -17,6 +17,7 @@ export default defineConfig(({ mode }) => {
           target: "http://10.188.10.151:5296",
           changeOrigin: true,
           secure: false,
+          rewrite: (path) => path.replace(/^\/api/, "/api"),
         },
       },
     },
