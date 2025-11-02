@@ -12,6 +12,13 @@ export default defineConfig(({ mode }) => {
       port: 5174,
       strictPort: true,
       host: true,
+      proxy: {
+        "/api": {
+          target: "http://10.188.10.151:5296",
+          changeOrigin: true,
+          secure: false,
+        },
+      },
     },
     preview: {
       port: 5174,

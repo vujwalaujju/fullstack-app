@@ -10,6 +10,7 @@ import {
 import { Button } from "primereact/button";
 import "../style.css";
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const API = import.meta.env.VITE_BACKEND_URL || "http://localhost:5296";
 
 type Row = {
@@ -25,6 +26,44 @@ const FIELD_OPTS = [
   { label: "Humidity", value: "humidity" },
 ] as const;
 
+// async function query(
+//   field: "temperature" | "pressure" | "humidity",
+//   nodes: string[]
+// ): Promise<Row[]> {
+//   const params = new URLSearchParams({
+//     measurement: "weather",
+//     field,
+//     range: "-1h",
+//     limit: "8000",
+//   });
+
+//   try {
+//     const res = await fetch(`${API}/api/influx/query?${params.toString()}`, {
+//       method: "GET",
+//       mode: "cors",
+//       credentials: "include",
+//     });
+//     if (!res.ok) {
+//       throw new Error(`HTTP error! Status: ${res.status} - ${res.statusText}`);
+//     }
+//     const data = await res.json();
+//     if (!Array.isArray(data)) return [];
+
+//     return data
+//       .filter((r: any) => {
+//         const nodeId = String(r.sensor_id ?? "");
+//         return nodes.length ? nodes.includes(nodeId) : true;
+//       })
+//       .map((r: any) => ({
+//         field,
+//         node: String(r.sensor_id ?? ""),
+//         time: r._time as string,
+//       }));
+//   } catch (error) {
+//     console.error("Query fetch error:", error);
+//     throw error;
+//   }
+// }
 async function query(
   field: "temperature" | "pressure" | "humidity",
   nodes: string[]
@@ -37,7 +76,7 @@ async function query(
   });
 
   try {
-    const res = await fetch(`${API}/api/influx/query?${params.toString()}`, {
+    const res = await fetch(`/api/influx/query?${params.toString()}`, {
       method: "GET",
       mode: "cors",
       credentials: "include",
@@ -77,11 +116,35 @@ export default function LiveDataTable() {
   const [nodes, setNodes] = useState<string[]>([]);
 
   // Load sensor node IDs from backend
+  // useEffect(() => {
+  //   (async () => {
+  //     try {
+  //       const res = await fetch(
+  //         `${API}/api/influx/tag-values?measurement=weather&tag=sensor_id`,
+  //         {
+  //           method: "GET",
+  //           mode: "cors",
+  //           credentials: "include",
+  //         }
+  //       );
+  //       if (!res.ok) {
+  //         throw new Error(
+  //           `HTTP error! Status: ${res.status} - ${res.statusText}`
+  //         );
+  //       }
+  //       const nodeData = await res.json();
+  //       setAllNodes(nodeData);
+  //     } catch (e) {
+  //       setErr(String(e));
+  //       console.error("Failed to load nodes:", e);
+  //     }
+  //   })();
+  // }, []);
   useEffect(() => {
     (async () => {
       try {
         const res = await fetch(
-          `${API}/api/influx/tag-values?measurement=weather&tag=sensor_id`,
+          `/api/influx/tag-values?measurement=weather&tag=sensor_id`,
           {
             method: "GET",
             mode: "cors",
