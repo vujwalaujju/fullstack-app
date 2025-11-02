@@ -75,21 +75,6 @@ jobs:
           cd backend
           npm install
 
-      - name: Create .env file
-        run: |
-          cd backend
-
-          # Overwrite .env completely (no duplicates!)
-          cat > .env << EOF
-          INFLUX_URL=${{ secrets.INFLUX_URL }}
-          INFLUX_TOKEN=${{ secrets.INFLUX_TOKEN }}
-          INFLUX_ORG=${{ secrets.INFLUX_ORG }}
-          INFLUX_BUCKET=${{ secrets.INFLUX_BUCKET }}
-          EOF
-
-              echo ".env created:"
-              cat .env
-
       - name: Archive backend artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -124,7 +109,12 @@ jobs:
       - name: Deploy Backend with PM2
         run: |
           cd "$HOME/full_stack_vj_app_/actions-runner/_work/fullstack-app/fullstack-app/backend"
-
+          [ ! -f .env ] && cat > .env << EOF
+          INFLUX_URL=${{ secrets.INFLUX_URL }}
+          INFLUX_TOKEN=${{ secrets.INFLUX_TOKEN }}
+          INFLUX_ORG=${{ secrets.INFLUX_ORG }}
+          INFLUX_BUCKET=${{ secrets.INFLUX_BUCKET }}
+          EOF
           # Ensure PM2 is available
           if [ ! -d "node_modules/pm2" ]; then
             echo "Installing PM2..."
