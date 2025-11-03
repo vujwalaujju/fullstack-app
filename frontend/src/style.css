@@ -48,7 +48,8 @@ body {
   line-height: 1.2;
   letter-spacing: -0.02em;
   margin: 4px 0 20px;
-  color: var(--text);
+  /* color: var(--text); */
+  color: peru;
   font-weight: 700;
   border-bottom: 2px solid var(--primary-light);
   padding-bottom: 8px;
