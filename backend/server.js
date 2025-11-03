@@ -73,6 +73,31 @@ app.get("/api/influx/measurements", (req, res) => {
   res.json(["weather"]);
 });
 
+// app.get("/api/influx/tag-values", async (req, res) => {
+//   try {
+//     const { measurement = "weather", tag = "sensor_id" } = req.query;
+
+//     const query = `
+//       import "influxdata/influxdb/schema"
+//       schema.tagValues(
+//         bucket: "${influxBucket}",
+//         tag: "${tag}",
+//         predicate: (r) => r._measurement == "${measurement}"
+//       )
+//     `;
+
+//     const rows = await queryApi.collectRows(query);
+//     const values = [...new Set(rows.map((r) => r._value))]
+//       .filter(Boolean)
+//       .sort();
+
+//     res.json(values);
+//   } catch (err) {
+//     console.error("Tag values error:", err);
+//     res.status(500).json({ error: err.message });
+//   }
+// });
+
 app.get("/api/influx/tag-values", async (req, res) => {
   try {
     const { measurement = "weather", tag = "sensor_id" } = req.query;
@@ -97,7 +122,6 @@ app.get("/api/influx/tag-values", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
 app.get("/api/influx/latest", async (req, res) => {
   try {
     const query = `
