@@ -171,19 +171,34 @@ app.get("/", (req, res) => {
 app.use(express.json());
 app.use(express.static("public"));
 
-// Helper: format timestamp in ISO‐like format (YYYY‑MM‑DD HH:MM:SS)
-const IST_TIME = (timestamp = Date.now()) => {
-  const now = new Date(timestamp);
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(
-    2,
-    "0"
-  )}-${String(now.getDate()).padStart(2, "0")} ${String(
-    now.getHours()
-  ).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(
-    now.getSeconds()
-  ).padStart(2, "0")}`;
-};
+//format timestamp in ISO‐like format
+// const IST_TIME = (timestamp = Date.now()) => {
+//   const now = new Date(timestamp);
+//   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(
+//     2,
+//     "0"
+//   )}-${String(now.getDate()).padStart(2, "0")} ${String(
+//     now.getHours()
+//   ).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(
+//     now.getSeconds()
+//   ).padStart(2, "0")}`;
+// };
 
+const IST_TIME = (timestamp = Date.now()) => {
+  return new Date(timestamp)
+    .toLocaleString("en-IN", {
+      timeZone: "Asia/Kolkata",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    })
+    .replace(/\//g, "-")
+    .replace(", ", " ");
+};
 const sqliteDb = new sqlite3.Database("./sensors.db");
 
 // Simulate weather
@@ -244,7 +259,7 @@ sqliteDb.serialize(() => {
 });
 
 setInterval(() => {
-  const now = IST_TIME(); // Fresh timestamp for this batch
+  const now = IST_TIME();
   const values = [];
   const placeholders = [];
 
