@@ -204,26 +204,93 @@ function getIndianWeather() {
   }
 }
 
-sqliteDb.serialize(() => {
-  sqliteDb.run(`DROP TABLE IF EXISTS weather`, (err) => {
-    if (err) console.error("Drop table error:", err);
+// sqliteDb.serialize(() => {
+//   sqliteDb.run(`DROP TABLE IF EXISTS weather`, (err) => {
+//     if (err) console.error("Drop table error:", err);
 
-    sqliteDb.run(
-      `CREATE TABLE weather (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        timestamp TEXT,
-        temperature REAL,
-        humidity REAL,
-        pressure REAL,
-        node TEXT
-      )`,
-      (err2) => {
-        if (err2) console.error("Create table error:", err2);
-      }
-    );
-  });
+//     sqliteDb.run(
+//       `CREATE TABLE weather (
+//         id INTEGER PRIMARY KEY AUTOINCREMENT,
+//         timestamp TEXT,
+//         temperature REAL,
+//         humidity REAL,
+//         pressure REAL,
+//         node TEXT
+//       )`,
+//       (err2) => {
+//         if (err2) console.error("Create table error:", err2);
+//       }
+//     );
+//   });
+// });
+
+// === 1. SCHEMA (Run once at startup) ===
+sqliteDb.serialize(() => {
+  sqliteDb.run(`DROP TABLE IF EXISTS weather`);
+  sqliteDb.run(`
+    CREATE TABLE IF NOT EXISTS weather (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      timestamp TEXT NOT NULL,
+      temperature REAL,
+      humidity REAL,
+      pressure REAL,
+      node TEXT
+    )
+  `);
+
+  // Optional: Create index for faster deletion
+  sqliteDb.run(
+    `CREATE INDEX IF NOT EXISTS idx_timestamp ON weather(timestamp)`
+  );
 });
 
+// === 2. INSERT DATA EVERY 2 SECONDS (Correct Timestamp + No Blocking) ===
+setInterval(() => {
+  const now = IST_TIME(); // Fresh timestamp for this batch
+  const values = [];
+  const placeholders = [];
+
+  stations.forEach((station) => {
+    const weather = getIndianWeather();
+    placeholders.push("(?, ?, ?, ?, ?)");
+    values.push(
+      now,
+      weather.temperature,
+      weather.humidity,
+      weather.pressure,
+      station
+    );
+  });
+
+  const sql = `
+    INSERT INTO weather (timestamp, temperature, humidity, pressure, node)
+    VALUES ${placeholders.join(", ")}
+  `;
+
+  sqliteDb.run(sql, values, function (err) {
+    if (err) {
+      console.error("SQLite Insert Error:", err);
+    } else {
+      console.log(`Inserted ${this.changes} rows at ${now}`);
+    }
+  });
+}, 2000);
+
+// === 3. DELETE OLD DATA: ONLY ONCE EVERY 30 SECONDS (NOT EVERY 2s!) ===
+setInterval(() => {
+  const cutoff = IST_TIME(Date.now() - 30 * 60 * 1000); // 30 minutes ago
+  sqliteDb.run(
+    `DELETE FROM weather WHERE timestamp < ?`,
+    [cutoff],
+    function (err) {
+      if (err) {
+        console.error("SQLite Delete Error:", err);
+      } else if (this.changes > 0) {
+        console.log(`Deleted ${this.changes} old rows before ${cutoff}`);
+      }
+    }
+  );
+}, 30_000); // Every 30 seconds
 const stations = ["Station1", "Station2", "Station3"];
 
 // Insert new data every 2 seconds
@@ -249,73 +316,152 @@ setInterval(() => {
     if (err) console.error("Delete error:", err);
   });
 }, 2000);
-
-app.get("/api/sqlite/kpi", (req, res) => {
-  sqliteDb.all(
-    `SELECT timestamp as time, temperature as temp, humidity as hum, pressure as press, node
-     FROM weather
-     ORDER BY timestamp DESC
-     LIMIT 60`,
-    [],
-    (err, rows) => {
-      if (err) {
-        console.error("KPI query error:", err);
-        return res.status(500).json({ error: err.message });
-      }
-      const sorted = rows.slice().reverse();
-      const points = sorted.flatMap((row) => {
-        return [
-          {
-            time: row.time,
-            value: +row.temp,
-            node: row.node,
-            field: "temperature",
-          },
-          {
-            time: row.time,
-            value: +row.hum,
-            node: row.node,
-            field: "humidity",
-          },
-          {
-            time: row.time,
-            value: +row.press,
-            node: row.node,
-            field: "pressure",
-          },
-        ];
-      });
-      res.json({ points });
-    }
-  );
-});
-
+// 1. LATEST: Real-time values (one per station)
 app.get("/api/sqlite/latest", (req, res) => {
   sqliteDb.all(
-    `SELECT * FROM weather WHERE timestamp = (
-       SELECT MAX(timestamp) FROM weather
-     )`,
+    `
+    SELECT node, temperature, humidity, pressure, timestamp
+    FROM weather
+    WHERE timestamp = (SELECT MAX(timestamp) FROM weather)
+    ORDER BY node
+    `,
     [],
     (err, rows) => {
-      if (err) {
-        console.error("Latest query error:", err);
-        return res.status(500).json({ error: err.message });
-      }
+      if (err) return res.status(500).json({ error: err.message });
 
       const latest = {};
-      rows.forEach((row) => {
-        latest[row.node] = row;
+      rows.forEach((r) => {
+        latest[r.node] = {
+          temperature: parseFloat(r.temperature),
+          humidity: parseFloat(r.humidity),
+          pressure: parseFloat(r.pressure),
+          timestamp: r.timestamp,
+        };
       });
 
-      return res.json({
-        temperature: latest["Station1"]?.temperature || 0,
-        humidity: latest["Station1"]?.humidity || 0,
-        pressure: latest["Station1"]?.pressure || 0,
-        all: latest,
+      res.json({
+        currentTime: IST_TIME(),
+        data: latest,
+        count: rows.length,
       });
     }
   );
 });
+
+// 2. KPI: Chart data (last ~2 minutes, 3 points per station per batch)
+app.get("/api/sqlite/kpi", (req, res) => {
+  sqliteDb.all(
+    `
+    SELECT 
+      timestamp as time, 
+      temperature, 
+      humidity, 
+      pressure, 
+      node
+    FROM weather
+    ORDER BY timestamp DESC
+    LIMIT 180  -- 3 stations × 60 batches = 180 rows (~2 min)
+    `,
+    [],
+    (err, rows) => {
+      if (err) return res.status(500).json({ error: err.message });
+
+      const reversed = rows.reverse(); // oldest → newest
+      const points = reversed.flatMap((row) => [
+        {
+          time: row.time,
+          value: +row.temperature,
+          node: row.node,
+          field: "temperature",
+        },
+        {
+          time: row.time,
+          value: +row.humidity,
+          node: row.node,
+          field: "humidity",
+        },
+        {
+          time: row.time,
+          value: +row.pressure,
+          node: row.node,
+          field: "pressure",
+        },
+      ]);
+
+      res.json({
+        points,
+        currentTime: IST_TIME(),
+        totalPoints: points.length,
+      });
+    }
+  );
+});
+// app.get("/api/sqlite/kpi", (req, res) => {
+//   sqliteDb.all(
+//     `SELECT timestamp as time, temperature as temp, humidity as hum, pressure as press, node
+//      FROM weather
+//      ORDER BY timestamp DESC
+//      LIMIT 60`,
+//     [],
+//     (err, rows) => {
+//       if (err) {
+//         console.error("KPI query error:", err);
+//         return res.status(500).json({ error: err.message });
+//       }
+//       const sorted = rows.slice().reverse();
+//       const points = sorted.flatMap((row) => {
+//         return [
+//           {
+//             time: row.time,
+//             value: +row.temp,
+//             node: row.node,
+//             field: "temperature",
+//           },
+//           {
+//             time: row.time,
+//             value: +row.hum,
+//             node: row.node,
+//             field: "humidity",
+//           },
+//           {
+//             time: row.time,
+//             value: +row.press,
+//             node: row.node,
+//             field: "pressure",
+//           },
+//         ];
+//       });
+//       res.json({ points });
+//     }
+//   );
+// });
+
+// app.get("/api/sqlite/latest", (req, res) => {
+//   sqliteDb.all(
+//     `SELECT * FROM weather WHERE timestamp = (
+//        SELECT MAX(timestamp) FROM weather
+//      )`,
+//     [],
+//     (err, rows) => {
+//       if (err) {
+//         console.error("Latest query error:", err);
+//         return res.status(500).json({ error: err.message });
+//       }
+
+//       const latest = {};
+//       rows.forEach((row) => {
+//         latest[row.node] = row;
+//       });
+
+//       return res.json({
+//         temperature: latest["Station1"]?.temperature || 0,
+//         humidity: latest["Station1"]?.humidity || 0,
+//         pressure: latest["Station1"]?.pressure || 0,
+//         all: latest,
+//       });
+//     }
+//   );
+// });
 
 app.get("/api/sqlite/readings", (req, res) => {
   sqliteDb.all(
