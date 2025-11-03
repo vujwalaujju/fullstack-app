@@ -162,21 +162,25 @@ app.get("/api/influx/tag-values", async (req, res) => {
   const { measurement = "weather", tag = "sensor_id" } = req.query;
 
   const flux = `
-    import "influxdata/influxdb/schema"
-    schema.tagValues(bucket: "${influxBucket}", tag: "${tag}")
-      |> filter(fn: (r) => r._measurement == "${measurement}")
-      |> keep(columns: ["_value"])
+    from(bucket: "${influxBucket}")
+      |> range(start: -1d)
+      |> filter(fn: (r) => r._measurement == "${measurement}" and exists r["${tag}"])
+      |> keep(columns: ["${tag}"])
+      |> distinct(column: "${tag}")
+      |> group()
+      |> map(fn: (r) => ({ _value: r["${tag}"] }))
   `;
 
   try {
     const values = [];
-    for await (const { values, tableMeta } of queryApi.iterateRows(flux)) {
-      const o = tableMeta.toObject(values);
-      values.push(o._value);
+    for await (const { values: row, tableMeta } of queryApi.iterateRows(flux)) {
+      const obj = tableMeta.toObject(row);
+      if (obj._value) values.push(obj._value);
     }
-    res.json([...new Set(values)].sort());
+    console.log("Tag-values response:", values); // DEBUG LOG
+    res.json(values);
   } catch (err) {
-    console.error("Tag values error:", err);
+    console.error("Tag-values ERROR:", err.message);
     res.status(500).json({ error: err.message });
   }
 });
