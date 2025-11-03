@@ -99,29 +99,27 @@ app.get("/api/influx/measurements", (req, res) => {
 // });
 
 app.get("/api/influx/tag-values", async (req, res) => {
-  const { measurement = "weather", tag = "sensor_id" } = req.query;
-
-  const flux = `
-    from(bucket: "${influxBucket}")
-      |> range(start: -7d)
-      |> filter(fn: (r) => r._measurement == "${measurement}")
-      |> keep(columns: ["${tag}"])
-      |> distinct(column: "${tag}")
-      |> group()
-      |> map(fn: (r) => ({ _value: r["${tag}"] }))
-  `;
-
   try {
-    const values = [];
-    for await (const { values: row, tableMeta } of queryApi.iterateRows(flux)) {
-      const obj = tableMeta.toObject(row);
-      if (obj._value) values.push(obj._value);
+    const flux = `
+      from(bucket: "${influxBucket}")
+        |> range(start: -1d)
+        |> filter(fn: (r) => r._measurement == "weather")
+        |> keep(columns: ["sensor_id"])
+        |> distinct(column: "sensor_id")
+    `;
+
+    const values = new Set();
+    for await (const { values, tableMeta } of queryApi.iterateRows(flux)) {
+      const row = tableMeta.toObject(values);
+      if (row.sensor_id) values.add(row.sensor_id);
     }
-    console.log("LiveDataTable Nodes →", values); // DEBUG
-    res.json([...new Set(values)].sort());
+
+    const result = Array.from(values).sort();
+    console.log("Nodes loaded:", result);
+    res.json(result);
   } catch (err) {
-    console.error("tag-values ERROR:", err.message);
-    res.status(500).json({ error: err.message });
+    console.error("tag-values failed:", err.message);
+    res.status(500).json({ error: "Failed to load nodes" });
   }
 });
 app.get("/api/influx/latest", async (req, res) => {
