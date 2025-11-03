@@ -73,55 +73,31 @@ app.get("/api/influx/measurements", (req, res) => {
   res.json(["weather"]);
 });
 
-// app.get("/api/influx/tag-values", async (req, res) => {
-//   try {
-//     const { measurement = "weather", tag = "sensor_id" } = req.query;
-
-//     const query = `
-//       import "influxdata/influxdb/schema"
-//       schema.tagValues(
-//         bucket: "${influxBucket}",
-//         tag: "${tag}",
-//         predicate: (r) => r._measurement == "${measurement}"
-//       )
-//     `;
-
-//     const rows = await queryApi.collectRows(query);
-//     const values = [...new Set(rows.map((r) => r._value))]
-//       .filter(Boolean)
-//       .sort();
-
-//     res.json(values);
-//   } catch (err) {
-//     console.error("Tag values error:", err);
-//     res.status(500).json({ error: err.message });
-//   }
-// });
-
 app.get("/api/influx/tag-values", async (req, res) => {
   try {
-    const flux = `
-      from(bucket: "${influxBucket}")
-        |> range(start: -1d)
-        |> filter(fn: (r) => r._measurement == "weather")
-        |> keep(columns: ["sensor_id"])
-        |> distinct(column: "sensor_id")
+    const { measurement = "weather", tag = "sensor_id" } = req.query;
+
+    const query = `
+      import "influxdata/influxdb/schema"
+      schema.tagValues(
+        bucket: "${influxBucket}",
+        tag: "${tag}",
+        predicate: (r) => r._measurement == "${measurement}"
+      )
     `;
 
-    const values = new Set();
-    for await (const { values, tableMeta } of queryApi.iterateRows(flux)) {
-      const row = tableMeta.toObject(values);
-      if (row.sensor_id) values.add(row.sensor_id);
-    }
+    const rows = await queryApi.collectRows(query);
+    const values = [...new Set(rows.map((r) => r._value))]
+      .filter(Boolean)
+      .sort();
 
-    const result = Array.from(values).sort();
-    console.log("Nodes loaded:", result);
-    res.json(result);
+    res.json(values);
   } catch (err) {
-    console.error("tag-values failed:", err.message);
-    res.status(500).json({ error: "Failed to load nodes" });
+    console.error("Tag values error:", err);
+    res.status(500).json({ error: err.message });
   }
 });
+
 app.get("/api/influx/latest", async (req, res) => {
   try {
     const query = `
