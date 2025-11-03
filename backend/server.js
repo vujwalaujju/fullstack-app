@@ -73,30 +73,30 @@ app.get("/api/influx/measurements", (req, res) => {
   res.json(["weather"]);
 });
 
-// app.get("/api/influx/tag-values", async (req, res) => {
-//   try {
-//     const { measurement = "weather", tag = "sensor_id" } = req.query;
+app.get("/api/influx/tag-values", async (req, res) => {
+  try {
+    const { measurement = "weather", tag = "sensor_id" } = req.query;
 
-//     const query = `
-//       import "influxdata/influxdb/schema"
-//       schema.tagValues(
-//         bucket: "${influxBucket}",
-//         tag: "${tag}",
-//         predicate: (r) => r._measurement == "${measurement}"
-//       )
-//     `;
+    const query = `
+      import "influxdata/influxdb/schema"
+      schema.tagValues(
+        bucket: "${influxBucket}",
+        tag: "${tag}",
+        predicate: (r) => r._measurement == "${measurement}"
+      )
+    `;
 
-//     const rows = await queryApi.collectRows(query);
-//     const values = [...new Set(rows.map((r) => r._value))]
-//       .filter(Boolean)
-//       .sort();
+    const rows = await queryApi.collectRows(query);
+    const values = [...new Set(rows.map((r) => r._value))]
+      .filter(Boolean)
+      .sort();
 
-//     res.json(values);
-//   } catch (err) {
-//     console.error("Tag values error:", err);
-//     res.status(500).json({ error: err.message });
-//   }
-// });
+    res.json(values);
+  } catch (err) {
+    console.error("Tag values error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 app.get("/api/influx/latest", async (req, res) => {
   try {
@@ -127,84 +127,27 @@ app.get("/api/influx/latest", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
 app.get("/api/influx/query", async (req, res) => {
-  const { field, range = "-1h", limit = "1000" } = req.query;
-  if (!field) return res.status(400).json({ error: "field required" });
-
-  const flux = `
-    from(bucket: "${influxBucket}")
-      |> range(start: ${range})
-      |> filter(fn: (r) => r._measurement == "weather")
-      |> filter(fn: (r) => r._field == "${field}")
-      |> limit(n: ${limit})
-      |> keep(columns: ["_time", "_value", "sensor_id"])
-  `;
-
   try {
-    const rows = [];
-    for await (const { values, tableMeta } of queryApi.iterateRows(flux)) {
-      const o = tableMeta.toObject(values);
-      rows.push({
-        time: o._time,
-        value: parseFloat(o._value),
-        node: o.sensor_id,
-      });
-    }
+    const { field, range = "-1h", limit = "8000" } = req.query;
+    if (!field) throw new Error("Missing field");
+
+    const query = `
+      from(bucket: "${influxBucket}")
+        |> range(start: ${range})
+        |> filter(fn: (r) => r._measurement == "weather")
+        |> filter(fn: (r) => r._field == "${field}")
+        |> limit(n: ${limit})
+    `;
+
+    const rows = await queryApi.collectRows(query);
     res.json(rows);
   } catch (err) {
-    console.error("Influx query error:", err);
+    console.error("Query error:", err);
     res.status(500).json({ error: err.message });
   }
 });
-
-// GET /api/influx/tag-values?measurement=weather&tag=sensor_id
-app.get("/api/influx/tag-values", async (req, res) => {
-  const { measurement = "weather", tag = "sensor_id" } = req.query;
-
-  const flux = `
-    from(bucket: "${influxBucket}")
-      |> range(start: -1d)
-      |> filter(fn: (r) => r._measurement == "${measurement}" and exists r["${tag}"])
-      |> keep(columns: ["${tag}"])
-      |> distinct(column: "${tag}")
-      |> group()
-      |> map(fn: (r) => ({ _value: r["${tag}"] }))
-  `;
-
-  try {
-    const values = [];
-    for await (const { values: row, tableMeta } of queryApi.iterateRows(flux)) {
-      const obj = tableMeta.toObject(row);
-      if (obj._value) values.push(obj._value);
-    }
-    console.log("Tag-values response:", values); // DEBUG LOG
-    res.json(values);
-  } catch (err) {
-    console.error("Tag-values ERROR:", err.message);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// app.get("/api/influx/query", async (req, res) => {
-//   try {
-//     const { field, range = "-1h", limit = "8000" } = req.query;
-//     if (!field) throw new Error("Missing field");
-
-//     const query = `
-//       from(bucket: "${influxBucket}")
-//         |> range(start: ${range})
-//         |> filter(fn: (r) => r._measurement == "weather")
-//         |> filter(fn: (r) => r._field == "${field}")
-//         |> limit(n: ${limit})
-//     `;
-
-//     const rows = await queryApi.collectRows(query);
-//     res.json(rows);
-//   } catch (err) {
-//     console.error("Query error:", err);
-//     res.status(500).json({ error: err.message });
-//   }
-// });
 
 app.get("/health", (req, res) => {
   res.json({ status: "OK", timestamp: new Date().toISOString() });
