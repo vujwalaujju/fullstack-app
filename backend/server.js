@@ -170,7 +170,6 @@ import express from "express";
 import cors from "cors";
 import { InfluxDB, Point } from "@influxdata/influxdb-client";
 import dotenv from "dotenv";
-import sqlite3 from "sqlite3";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -182,7 +181,8 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = 5296;
 
-// CORS
+app.use(express.json());
+
 app.use(
   cors({
     origin: [
@@ -198,11 +198,6 @@ app.use(
   })
 );
 
-app.use(express.json());
-
-// ====================
-// INFLUXDB SETUP
-// ====================
 const influxUrl = process.env.INFLUX_URL || "http://localhost:8086";
 const influxToken = process.env.INFLUX_TOKEN || "";
 const influxOrg = process.env.INFLUX_ORG || "actalent";
@@ -223,8 +218,7 @@ function generateValue(type) {
 
 setInterval(() => {
   sensors.forEach((id) => {
-    const prefix = id[0];
-    const type = types[prefix];
+    const type = types[id[0]];
     const value = generateValue(type);
     const point = new Point("weather")
       .tag("sensor_id", id)
@@ -233,24 +227,15 @@ setInterval(() => {
     writeApi.writePoint(point);
     console.log(`Writing: ${id} ${type}=${value.toFixed(2)}`);
   });
-  writeApi.flush().catch((error) => {
-    console.error("Write error:", error);
-  });
+  writeApi.flush().catch((e) => console.error("Flush error:", e));
 }, 2000);
 
-// ====================
-// API ROUTES (MUST BE BEFORE express.static!)
-// ====================
-
-app.get("/api/influx/measurements", (req, res) => {
-  res.json(["weather"]);
-});
+app.get("/api/influx/measurements", (_req, res) => res.json(["weather"]));
 
 app.get("/api/influx/tag-values", async (req, res) => {
   try {
     const { measurement = "weather", tag = "sensor_id" } = req.query;
-
-    const query = `
+    const flux = `
       import "influxdata/influxdb/schema"
       schema.tagValues(
         bucket: "${influxBucket}",
@@ -258,22 +243,20 @@ app.get("/api/influx/tag-values", async (req, res) => {
         predicate: (r) => r._measurement == "${measurement}"
       )
     `;
-
-    const rows = await queryApi.collectRows(query);
+    const rows = await queryApi.collectRows(flux);
     const values = [...new Set(rows.map((r) => r._value))]
       .filter(Boolean)
       .sort();
-
     res.json(values);
-  } catch (err) {
-    console.error("Tag values error:", err);
-    res.status(500).json({ error: err.message });
+  } catch (e) {
+    console.error("tag-values error:", e);
+    res.status(500).json({ error: e.message });
   }
 });
 
-app.get("/api/influx/latest", async (req, res) => {
+app.get("/api/influx/latest", async (_req, res) => {
   try {
-    const query = `
+    const flux = `
       from(bucket: "${influxBucket}")
         |> range(start: -1h)
         |> filter(fn: (r) => r._measurement == "weather")
@@ -282,9 +265,7 @@ app.get("/api/influx/latest", async (req, res) => {
         |> group(columns: ["sensor_id"])
         |> keep(columns: ["sensor_id", "temperature", "humidity", "pressure"])
     `;
-
-    const rows = await queryApi.collectRows(query);
-
+    const rows = await queryApi.collectRows(flux);
     const result = rows
       .map((r) => ({
         node: r.sensor_id,
@@ -293,11 +274,10 @@ app.get("/api/influx/latest", async (req, res) => {
         pressure: r.pressure,
       }))
       .filter((r) => r.node);
-
     res.json(result);
-  } catch (err) {
-    console.error("Query error:", err.message);
-    res.status(500).json({ error: err.message });
+  } catch (e) {
+    console.error("latest error:", e);
+    res.status(500).json({ error: e.message });
   }
 });
 
@@ -306,10 +286,10 @@ app.get("/api/influx/query", async (req, res) => {
     const { field, range = "-1h", limit = "8000" } = req.query;
     if (!field) throw new Error("Missing field");
 
-    const validFields = ["temperature", "pressure", "humidity"];
-    if (!validFields.includes(field)) throw new Error("Invalid field");
+    const valid = ["temperature", "pressure", "humidity"];
+    if (!valid.includes(field)) throw new Error("Invalid field");
 
-    const query = `
+    const flux = `
       from(bucket: "${influxBucket}")
         |> range(start: ${range})
         |> filter(fn: (r) => r._measurement == "weather")
@@ -318,26 +298,24 @@ app.get("/api/influx/query", async (req, res) => {
         |> limit(n: ${limit})
     `;
 
-    const rows = await queryApi.collectRows(query);
-
-    const result = rows.map((r) => ({
+    const rows = await queryApi.collectRows(flux);
+    const out = rows.map((r) => ({
       _time: r._time,
       _value: r._value,
-      sensor_id: r.sensor_id || "unknown",
+      sensor_id: r.sensor_id ?? "unknown",
     }));
-
-    res.json(result);
-  } catch (err) {
-    console.error("Query error:", err);
-    res.status(500).json({ error: err.message });
+    res.json(out);
+  } catch (e) {
+    console.error("query error:", e);
+    res.status(500).json({ error: e.message });
   }
 });
 
-app.get("/health", (req, res) => {
-  res.json({ status: "OK", timestamp: new Date().toISOString() });
-});
+app.get("/health", (_req, res) =>
+  res.json({ status: "OK", timestamp: new Date().toISOString() })
+);
 
-app.get("/", (req, res) => {
+app.get("/", (_req, res) =>
   res.json({
     message: "Weather API is running!",
     endpoints: {
@@ -346,10 +324,17 @@ app.get("/", (req, res) => {
       tagValues: "/api/influx/tag-values",
       query: "/api/influx/query?field=temperature&range=-1h&limit=100",
     },
-  });
-});
+  })
+);
 
 app.use(express.static(path.join(__dirname, "public")));
+
+app.get("*", (req, res) => {
+  if (req.path.startsWith("/api")) {
+    return res.status(404).json({ error: "API endpoint not found" });
+  }
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
 
 //SQLITE code
 
