@@ -49,7 +49,7 @@ body {
   letter-spacing: -0.02em;
   margin: 4px 0 20px;
   /* color: var(--text); */
-  color: green;
+  color: blue;
   font-weight: 700;
   border-bottom: 2px solid var(--primary-light);
   padding-bottom: 8px;
@@ -150,7 +150,7 @@ body {
   padding: 10px 12px;
   border-radius: 12px;
   border: 1px solid var(--border);
-  background: #fff;
+  background: greenyellow;
   outline: none;
   font-weight: 500;
   transition: all 0.3s ease;
