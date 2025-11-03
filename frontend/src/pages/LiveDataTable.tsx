@@ -245,7 +245,7 @@ export default function LiveDataTable() {
 
   return (
     <div className="container">
-      <h2 className="section-title">Live Data Table (Last 1 Hour)</h2>
+      <h2 className="section-title">Live Data Table (Last One Hour data)</h2>
 
       <div className="controls">
         <Dropdown
