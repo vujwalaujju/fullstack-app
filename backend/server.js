@@ -185,19 +185,10 @@ app.use(express.static("public"));
 // };
 
 const IST_TIME = (timestamp = Date.now()) => {
-  return new Date(timestamp)
-    .toLocaleString("en-IN", {
-      timeZone: "Asia/Kolkata",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: false,
-    })
-    .replace(/\//g, "-")
-    .replace(", ", " ");
+  const date = new Date(timestamp);
+  const IST_OFFSET = 5.5 * 60 * 60 * 1000;
+  const istDate = new Date(date.getTime() + IST_OFFSET);
+  return istDate.toISOString().slice(0, 19).replace("T", " ");
 };
 const sqliteDb = new sqlite3.Database("./sensors.db");
 

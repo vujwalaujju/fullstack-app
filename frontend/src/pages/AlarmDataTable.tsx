@@ -152,16 +152,55 @@ export default function AlarmDataTable() {
     return () => clearInterval(id);
   }, [field, nodes]);
 
+  // const niceRows = useMemo(
+  //   () =>
+  //     rows.map((r) => {
+  //       let timeLabel = "Invalid Date";
+  //       try {
+  //         const isoTime = r.time.replace(" ", "T");
+  //         const isoWithT = r.time.replace(" ", "T") + "+05:30";
+  //         const parsed = Date.parse(isoTime);
+
+  //         if (!isNaN(parsed)) {
+  //           timeLabel = new Date(parsed).toLocaleString("en-IN", {
+  //             timeZone: "Asia/Kolkata",
+  //             hour12: true,
+  //             year: "numeric",
+  //             month: "short",
+  //             day: "numeric",
+  //             hour: "2-digit",
+  //             minute: "2-digit",
+  //             second: "2-digit",
+  //           });
+  //         }
+  //       } catch (e) {
+  //         console.error("Parse error:", r.time);
+  //       }
+  //       return {
+  //         ...r,
+  //         fieldLabel:
+  //           r.field === "temperature"
+  //             ? "Temperature"
+  //             : r.field === "pressure"
+  //             ? "Pressure"
+  //             : "Humidity",
+  //         valueLabel: r.value.toFixed(r.field === "pressure" ? 2 : 1),
+  //         timeLabel,
+  //       };
+  //     }),
+  //   [rows]
+  // );
   const niceRows = useMemo(
     () =>
       rows.map((r) => {
         let timeLabel = "Invalid Date";
         try {
-          const isoTime = r.time.replace(" ", "T");
-          const parsed = Date.parse(isoTime);
+          // Input: "2025-11-03 14:30:45"
+          const isoWithT = r.time.replace(" ", "T") + "+05:30"; // Explicit IST
+          const date = new Date(isoWithT);
 
-          if (!isNaN(parsed)) {
-            timeLabel = new Date(parsed).toLocaleString("en-IN", {
+          if (!isNaN(date.getTime())) {
+            timeLabel = date.toLocaleString("en-IN", {
               timeZone: "Asia/Kolkata",
               hour12: true,
               year: "numeric",
@@ -173,8 +212,9 @@ export default function AlarmDataTable() {
             });
           }
         } catch (e) {
-          console.error("Parse error:", r.time);
+          console.error("Date parse failed:", r.time, e);
         }
+
         return {
           ...r,
           fieldLabel:
