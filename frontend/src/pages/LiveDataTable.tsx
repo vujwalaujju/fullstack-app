@@ -76,11 +76,19 @@ async function query(
   });
 
   try {
-    const res = await fetch(`/api/influx/query?${params.toString()}`, {
-      method: "GET",
-      mode: "cors",
-      credentials: "include",
-    });
+    // const res = await fetch(`/api/influx/query?${params.toString()}`, {
+    //   method: "GET",
+    //   mode: "cors",
+    //   credentials: "include",
+    // });
+    const res = await fetch(
+      "http://10.188.10.151:5296/api/influx/query?" + params,
+      {
+        credentials: "include",
+        mode: "cors",
+        method: "GET",
+      }
+    );
 
     if (!res.ok) {
       throw new Error(`HTTP error! Status: ${res.status} - ${res.statusText}`);
@@ -149,6 +157,7 @@ export default function LiveDataTable() {
           `/api/influx/tag-values?measurement=weather&tag=sensor_id`,
           {
             method: "GET",
+
             mode: "cors",
             credentials: "include",
           }
