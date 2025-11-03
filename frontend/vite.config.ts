@@ -9,7 +9,7 @@ export default defineConfig(({ mode }) => {
       chunkSizeWarningLimit: 2000,
     },
     server: {
-      port: 5174,
+      port: 5173,
       strictPort: true,
       host: true,
       proxy: {
