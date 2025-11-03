@@ -49,14 +49,11 @@ body {
   letter-spacing: -0.02em;
   margin: 4px 0 20px;
   /* color: var(--text); */
-  color: peru;
+  color: brown;
   font-weight: 700;
   border-bottom: 2px solid var(--primary-light);
   padding-bottom: 8px;
   transition: color 0.3s ease;
-}
-.heading {
-  color: maroon;
 }
 
 /* ---- Navbar ---- */
