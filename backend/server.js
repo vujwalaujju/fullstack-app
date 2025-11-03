@@ -238,15 +238,13 @@ sqliteDb.serialize(() => {
     )
   `);
 
-  // Optional: Create index for faster deletion
   sqliteDb.run(
     `CREATE INDEX IF NOT EXISTS idx_timestamp ON weather(timestamp)`
   );
 });
 
-// === 2. INSERT DATA EVERY 2 SECONDS (Correct Timestamp + No Blocking) ===
 setInterval(() => {
-  const now = IST_TIME(); // Fresh timestamp for this batch
+  const now = IST_TIME();
   const values = [];
   const placeholders = [];
 
@@ -268,55 +266,94 @@ setInterval(() => {
   `;
 
   sqliteDb.run(sql, values, function (err) {
-    if (err) {
-      console.error("SQLite Insert Error:", err);
-    } else {
-      console.log(`Inserted ${this.changes} rows at ${now}`);
-    }
+    if (err) console.error("SQLite Insert Error:", err);
+    else console.log(`Inserted ${this.changes} rows at ${now}`);
   });
 }, 2000);
 
-// === 3. DELETE OLD DATA: ONLY ONCE EVERY 30 SECONDS (NOT EVERY 2s!) ===
 setInterval(() => {
-  const cutoff = IST_TIME(Date.now() - 30 * 60 * 1000); // 30 minutes ago
+  const cutoff = IST_TIME(Date.now() - 30 * 60 * 1000);
   sqliteDb.run(
     `DELETE FROM weather WHERE timestamp < ?`,
     [cutoff],
     function (err) {
-      if (err) {
-        console.error("SQLite Delete Error:", err);
-      } else if (this.changes > 0) {
+      if (err) console.error("SQLite Delete Error:", err);
+      else if (this.changes > 0) {
         console.log(`Deleted ${this.changes} old rows before ${cutoff}`);
       }
     }
   );
-}, 30_000); // Every 30 seconds
-const stations = ["Station1", "Station2", "Station3"];
+}, 30_000);
 
-// Insert new data every 2 seconds
-setInterval(() => {
-  const now = IST_TIME();
-  stations.forEach((station) => {
-    const { temperature, humidity, pressure } = getIndianWeather();
-    sqliteDb.run(
-      `INSERT INTO weather (timestamp, temperature, humidity, pressure, node)
-       VALUES (?, ?, ?, ?, ?)`,
-      [now, temperature, humidity, pressure, station],
-      (err) => {
-        if (err) console.error("Insert error:", err);
-      }
-    );
-  });
-}, 2000);
+// setInterval(() => {
+//   const now = IST_TIME(); // Fresh timestamp for this batch
+//   const values = [];
+//   const placeholders = [];
 
-// Delete data older than 30 minutes for every 2 seconds
-setInterval(() => {
-  const cutoff = IST_TIME(Date.now() - 30 * 60 * 1000);
-  sqliteDb.run(`DELETE FROM weather WHERE timestamp < ?`, [cutoff], (err) => {
-    if (err) console.error("Delete error:", err);
-  });
-}, 2000);
-// 1. LATEST: Real-time values (one per station)
+//   stations.forEach((station) => {
+//     const weather = getIndianWeather();
+//     placeholders.push("(?, ?, ?, ?, ?)");
+//     values.push(
+//       now,
+//       weather.temperature,
+//       weather.humidity,
+//       weather.pressure,
+//       station
+//     );
+//   });
+
+//   const sql = `
+//     INSERT INTO weather (timestamp, temperature, humidity, pressure, node)
+//     VALUES ${placeholders.join(", ")}
+//   `;
+
+//   sqliteDb.run(sql, values, function (err) {
+//     if (err) {
+//       console.error("SQLite Insert Error:", err);
+//     } else {
+//       console.log(`Inserted ${this.changes} rows at ${now}`);
+//     }
+//   });
+// }, 2000);
+
+// setInterval(() => {
+//   const cutoff = IST_TIME(Date.now() - 30 * 60 * 1000); // 30 minutes ago
+//   sqliteDb.run(
+//     `DELETE FROM weather WHERE timestamp < ?`,
+//     [cutoff],
+//     function (err) {
+//       if (err) {
+//         console.error("SQLite Delete Error:", err);
+//       } else if (this.changes > 0) {
+//         console.log(`Deleted ${this.changes} old rows before ${cutoff}`);
+//       }
+//     }
+//   );
+// }, 30_000);
+// const stations = ["Station1", "Station2", "Station3"];
+
+// setInterval(() => {
+//   const now = IST_TIME();
+//   stations.forEach((station) => {
+//     const { temperature, humidity, pressure } = getIndianWeather();
+//     sqliteDb.run(
+//       `INSERT INTO weather (timestamp, temperature, humidity, pressure, node)
+//        VALUES (?, ?, ?, ?, ?)`,
+//       [now, temperature, humidity, pressure, station],
+//       (err) => {
+//         if (err) console.error("Insert error:", err);
+//       }
+//     );
+//   });
+// }, 2000);
+
+// setInterval(() => {
+//   const cutoff = IST_TIME(Date.now() - 30 * 60 * 1000);
+//   sqliteDb.run(`DELETE FROM weather WHERE timestamp < ?`, [cutoff], (err) => {
+//     if (err) console.error("Delete error:", err);
+//   });
+// }, 2000);
+
 app.get("/api/sqlite/latest", (req, res) => {
   sqliteDb.all(
     `
