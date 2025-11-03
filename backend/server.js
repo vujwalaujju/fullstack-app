@@ -1,14 +1,188 @@
+// import express from "express";
+// import cors from "cors";
+// import { InfluxDB, Point } from "@influxdata/influxdb-client";
+// import dotenv from "dotenv";
+// import sqlite3 from "sqlite3";
+
+// dotenv.config();
+
+// const app = express();
+// const PORT = 5296;
+
+// app.use(
+//   cors({
+//     origin: [
+//       "http://localhost:5175",
+//       "http://localhost:3000",
+//       "http://localhost:5055",
+//       "http://localhost:5174",
+//       "http://localhost:5173",
+//       "http://10.188.10.151:5174",
+//       "http://10.188.10.151:5173",
+//     ],
+//     credentials: true,
+//   })
+// );
+
+// app.use(express.json());
+// app.use(express.static("public"));
+
+// const influxUrl = process.env.INFLUX_URL || "http://localhost:8086";
+// const influxToken = process.env.INFLUX_TOKEN || "";
+// const influxOrg = process.env.INFLUX_ORG || "actalent";
+// const influxBucket = process.env.INFLUX_BUCKET || "weather";
+
+// const client = new InfluxDB({ url: influxUrl, token: influxToken });
+// const writeApi = client.getWriteApi(influxOrg, influxBucket);
+// const queryApi = client.getQueryApi(influxOrg);
+
+// const sensors = ["T1", "T2", "T3", "P1", "P2", "P3", "H1", "H2"];
+// const types = { T: "temperature", P: "pressure", H: "humidity" };
+
+// function generateValue(type) {
+//   if (type === "temperature") return Math.random() * 30 + 15;
+//   if (type === "pressure") return Math.random() * 20 + 1010;
+//   return Math.random() * 40 + 50;
+// }
+
+// setInterval(() => {
+//   sensors.forEach((id) => {
+//     const prefix = id[0];
+//     const type = types[prefix];
+//     const value = generateValue(type);
+//     const point = new Point("weather")
+//       .tag("sensor_id", id)
+//       .floatField(type, value)
+//       .timestamp(new Date());
+//     writeApi.writePoint(point);
+//     console.log(`Writing: ${id} ${type}=${value.toFixed(2)}`);
+//   });
+//   writeApi
+//     .flush()
+//     .then(() => {
+//       const temp = generateValue("temperature").toFixed(1);
+//       const press = generateValue("pressure").toFixed(0);
+//       const hum = generateValue("humidity").toFixed(1);
+//     })
+//     .catch((error) => {
+//       console.error("Write error:", error);
+//     });
+// }, 2000);
+
+// app.get("/api/influx/measurements", (req, res) => {
+//   res.json(["weather"]);
+// });
+
+// app.get("/api/influx/tag-values", async (req, res) => {
+//   try {
+//     const { measurement = "weather", tag = "sensor_id" } = req.query;
+
+//     const query = `
+//       import "influxdata/influxdb/schema"
+//       schema.tagValues(
+//         bucket: "${influxBucket}",
+//         tag: "${tag}",
+//         predicate: (r) => r._measurement == "${measurement}"
+//       )
+//     `;
+
+//     const rows = await queryApi.collectRows(query);
+//     const values = [...new Set(rows.map((r) => r._value))]
+//       .filter(Boolean)
+//       .sort();
+
+//     res.json(values);
+//   } catch (err) {
+//     console.error("Tag values error:", err);
+//     res.status(500).json({ error: err.message });
+//   }
+// });
+
+// app.get("/api/influx/latest", async (req, res) => {
+//   try {
+//     const query = `
+//       from(bucket: "${influxBucket}")
+//         |> range(start: -1h)
+//         |> filter(fn: (r) => r._measurement == "weather")
+//         |> last()
+//         |> pivot(rowKey: ["_time"], columnKey: ["_field"], valueColumn: "_value")
+//         |> group(columns: ["sensor_id"])
+//         |> keep(columns: ["sensor_id", "temperature", "humidity", "pressure"])
+//     `;
+
+//     const rows = await queryApi.collectRows(query);
+
+//     const result = rows
+//       .map((r) => ({
+//         node: r.sensor_id,
+//         temperature: r.temperature,
+//         humidity: r.humidity,
+//         pressure: r.pressure,
+//       }))
+//       .filter((r) => r.node);
+
+//     res.json(result);
+//   } catch (err) {
+//     console.error("Query error:", err.message);
+//     res.status(500).json({ error: err.message });
+//   }
+// });
+
+// app.get("/api/influx/query", async (req, res) => {
+//   try {
+//     const { field, range = "-1h", limit = "8000" } = req.query;
+//     if (!field) throw new Error("Missing field");
+
+//     const query = `
+//       from(bucket: "${influxBucket}")
+//         |> range(start: ${range})
+//         |> filter(fn: (r) => r._measurement == "weather")
+//         |> filter(fn: (r) => r._field == "${field}")
+//         |> limit(n: ${limit})
+//     `;
+
+//     const rows = await queryApi.collectRows(query);
+//     res.json(rows);
+//   } catch (err) {
+//     console.error("Query error:", err);
+//     res.status(500).json({ error: err.message });
+//   }
+// });
+
+// app.get("/health", (req, res) => {
+//   res.json({ status: "OK", timestamp: new Date().toISOString() });
+// });
+
+// app.get("/", (req, res) => {
+//   res.json({
+//     message: "Weather API is running!",
+//     endpoints: {
+//       health: "/health",
+//       measurements: "/api/influx/measurements",
+//       tagValues: "/api/influx/tag-values",
+//       query:
+//         "/api/influx/query?field=[temperature|pressure|humidity]&range=-1h&limit=8000",
+//     },
+//   });
+// });
+
 import express from "express";
 import cors from "cors";
 import { InfluxDB, Point } from "@influxdata/influxdb-client";
 import dotenv from "dotenv";
 import sqlite3 from "sqlite3";
+import path from "path";
+import { fileURLToPath } from "url";
 
 dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = 5296;
 
+// CORS
 app.use(
   cors({
     origin: [
@@ -25,8 +199,10 @@ app.use(
 );
 
 app.use(express.json());
-app.use(express.static("public"));
 
+// ====================
+// INFLUXDB SETUP
+// ====================
 const influxUrl = process.env.INFLUX_URL || "http://localhost:8086";
 const influxToken = process.env.INFLUX_TOKEN || "";
 const influxOrg = process.env.INFLUX_ORG || "actalent";
@@ -57,17 +233,14 @@ setInterval(() => {
     writeApi.writePoint(point);
     console.log(`Writing: ${id} ${type}=${value.toFixed(2)}`);
   });
-  writeApi
-    .flush()
-    .then(() => {
-      const temp = generateValue("temperature").toFixed(1);
-      const press = generateValue("pressure").toFixed(0);
-      const hum = generateValue("humidity").toFixed(1);
-    })
-    .catch((error) => {
-      console.error("Write error:", error);
-    });
+  writeApi.flush().catch((error) => {
+    console.error("Write error:", error);
+  });
 }, 2000);
+
+// ====================
+// API ROUTES (MUST BE BEFORE express.static!)
+// ====================
 
 app.get("/api/influx/measurements", (req, res) => {
   res.json(["weather"]);
@@ -133,16 +306,27 @@ app.get("/api/influx/query", async (req, res) => {
     const { field, range = "-1h", limit = "8000" } = req.query;
     if (!field) throw new Error("Missing field");
 
+    const validFields = ["temperature", "pressure", "humidity"];
+    if (!validFields.includes(field)) throw new Error("Invalid field");
+
     const query = `
       from(bucket: "${influxBucket}")
         |> range(start: ${range})
         |> filter(fn: (r) => r._measurement == "weather")
         |> filter(fn: (r) => r._field == "${field}")
+        |> keep(columns: ["_time", "_value", "sensor_id"])
         |> limit(n: ${limit})
     `;
 
     const rows = await queryApi.collectRows(query);
-    res.json(rows);
+
+    const result = rows.map((r) => ({
+      _time: r._time,
+      _value: r._value,
+      sensor_id: r.sensor_id || "unknown",
+    }));
+
+    res.json(result);
   } catch (err) {
     console.error("Query error:", err);
     res.status(500).json({ error: err.message });
@@ -160,11 +344,12 @@ app.get("/", (req, res) => {
       health: "/health",
       measurements: "/api/influx/measurements",
       tagValues: "/api/influx/tag-values",
-      query:
-        "/api/influx/query?field=[temperature|pressure|humidity]&range=-1h&limit=8000",
+      query: "/api/influx/query?field=temperature&range=-1h&limit=100",
     },
   });
 });
+
+app.use(express.static(path.join(__dirname, "public")));
 
 //SQLITE code
 
