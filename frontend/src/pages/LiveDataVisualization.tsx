@@ -275,7 +275,7 @@ export default function LiveDataVisualization() {
   return (
     <div className="container">
       <Card className="mb-3">
-        <h3 className="mt-0 mb-3">Line Graph</h3>
+        <h3 className="mt-0 mb-3 heading">Line Graph</h3>
         <Toolbar start={right} className="mb-3 border-round-lg" />
         <div className="p-3">
           {err && (

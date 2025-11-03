@@ -146,7 +146,7 @@ export default function SqliteDashboard() {
     <div className="container">
       <Card className="mb-3">
         <div className="p-3">
-          <h3 className="mt-0 mb-3">Live Graph1 - ALL STATIONS</h3>
+          <h3 className="mt-0 mb-3 heading">Live Graph1 - ALL STATIONS</h3>
           <div
             style={{
               display: "flex",
