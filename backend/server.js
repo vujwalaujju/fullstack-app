@@ -290,27 +290,27 @@ setInterval(() => {
 }, 30_000);
 const stations = ["Station1", "Station2", "Station3"];
 
-setInterval(() => {
-  const now = IST_TIME();
-  stations.forEach((station) => {
-    const { temperature, humidity, pressure } = getIndianWeather();
-    sqliteDb.run(
-      `INSERT INTO weather (timestamp, temperature, humidity, pressure, node)
-       VALUES (?, ?, ?, ?, ?)`,
-      [now, temperature, humidity, pressure, station],
-      (err) => {
-        if (err) console.error("Insert error:", err);
-      }
-    );
-  });
-}, 2000);
+// setInterval(() => {
+//   const now = IST_TIME();
+//   stations.forEach((station) => {
+//     const { temperature, humidity, pressure } = getIndianWeather();
+//     sqliteDb.run(
+//       `INSERT INTO weather (timestamp, temperature, humidity, pressure, node)
+//        VALUES (?, ?, ?, ?, ?)`,
+//       [now, temperature, humidity, pressure, station],
+//       (err) => {
+//         if (err) console.error("Insert error:", err);
+//       }
+//     );
+//   });
+// }, 2000);
 
-setInterval(() => {
-  const cutoff = IST_TIME(Date.now() - 30 * 60 * 1000);
-  sqliteDb.run(`DELETE FROM weather WHERE timestamp < ?`, [cutoff], (err) => {
-    if (err) console.error("Delete error:", err);
-  });
-}, 2000);
+// setInterval(() => {
+//   const cutoff = IST_TIME(Date.now() - 30 * 60 * 1000);
+//   sqliteDb.run(`DELETE FROM weather WHERE timestamp < ?`, [cutoff], (err) => {
+//     if (err) console.error("Delete error:", err);
+//   });
+// }, 2000);
 
 app.get("/api/sqlite/latest", (req, res) => {
   sqliteDb.all(
