@@ -1,0 +1,133 @@
+name: CI/CD Pipeline
+on:
+  push:
+    branches:
+      - Full-stack-Influx-POC
+  pull_request:
+    branches:
+      - Full-stack-Influx-POC
+
+jobs:
+  build-frontend:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Cache frontend dependencies
+        uses: actions/cache@v4
+        with:
+          path: frontend/node_modules
+          key: ${{ runner.os }}-frontend-${{ hashFiles('frontend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-frontend-
+
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Create .env file
+        run: |
+          cd frontend
+          echo "VITE_BACKEND_URL=${{ secrets.VITE_BACKEND_URL }}" >> .env
+          echo "VITE_FRONTEND_URL=${{ secrets.VITE_FRONTEND_URL }}" >> .env
+          echo "VITE_INFLUX_URL=${{ secrets.VITE_INFLUX_URL }}" >> .env
+
+      - name: Build frontend
+        run: |
+          cd frontend
+          npm run build
+
+      - name: Archive frontend artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: frontend/build
+          retention-days: 7
+
+  build-backend:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Cache backend dependencies
+        uses: actions/cache@v4
+        with:
+          path: backend/node_modules
+          key: ${{ runner.os }}-backend-${{ hashFiles('backend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-backend-
+      - name: Install backend dependencies
+        run: |
+          cd backend
+          npm install
+
+      - name: Archive backend artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-build
+          path: backend/
+          retention-days: 7
+
+  deploy:
+    needs: [build-frontend, build-backend]
+    runs-on: self-hosted
+    steps:
+      - name: Download frontend build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-build
+          path: frontend/build
+          merge-multiple: true
+
+      - name: Serve with Nginx (Frontend)
+        run: |
+          # Use sudo for rsync and nginx reload
+          sudo rsync -av --delete --chown=www-data:www-data frontend/build/ /var/www/full_stack_vj_app_frontend/
+          sudo systemctl reload nginx
+          echo "✅ Frontend deployed successfully"
+
+      - name: Download backend build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-build
+          path: $HOME/full_stack_vj_app_/actions-runner/_work/fullstack-app/fullstack-app/backend
+
+      - name: Deploy Backend with PM2
+        run: |
+          cd "$HOME/full_stack_vj_app_/actions-runner/_work/fullstack-app/fullstack-app/backend"
+          [ ! -f .env ] && cat > .env << EOF
+          INFLUX_URL=${{ secrets.INFLUX_URL }}
+          INFLUX_TOKEN=${{ secrets.INFLUX_TOKEN }}
+          INFLUX_ORG=${{ secrets.INFLUX_ORG }}
+          INFLUX_BUCKET=${{ secrets.INFLUX_BUCKET }}
+          EOF
+          # Ensure PM2 is available
+          if [ ! -d "node_modules/pm2" ]; then
+            echo "Installing PM2..."
+            npm install pm2
+          fi
+
+          # Restart or start the backend
+          npx pm2 restart fullstack-backend || npx pm2 start server.js --name fullstack-backend
+
+          # Save PM2 process list
+          npx pm2 save
+
+          # Show status
+          npx pm2 status
+
+          echo "✅ Backend deployed successfully"
