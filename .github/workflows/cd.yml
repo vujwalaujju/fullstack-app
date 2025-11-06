@@ -82,6 +82,54 @@ jobs:
           path: backend/
           retention-days: 7
 
+  docker-build-push:
+    needs: [build-frontend, build-backend]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download frontend (with .env)
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend
+
+      - name: Download backend (with .env)
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-dist
+          path: backend
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build & push frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Frontend-Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/fullstack-frontend:${{ needs.build-frontend.outputs.commit }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/fullstack-frontend:latest
+
+      - name: Build & push backend
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Backend-Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/fullstack-backend:${{ needs.build-frontend.outputs.commit }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/fullstack-backend:latest
+
   deploy:
     needs: [build-frontend, build-backend]
     runs-on: self-hosted
@@ -98,7 +146,7 @@ jobs:
           # Use sudo for rsync and nginx reload
           sudo rsync -av --delete --chown=www-data:www-data frontend/build/ /var/www/full_stack_vj_app_frontend/
           sudo systemctl reload nginx
-          echo "✅ Frontend deployed successfully"
+          echo "Frontend deployed successfully"
 
       - name: Download backend build artifact
         uses: actions/download-artifact@v4
@@ -130,4 +178,4 @@ jobs:
           # Show status
           npx pm2 status
 
-          echo "✅ Backend deployed successfully"
+          echo "Backend deployed successfully"
