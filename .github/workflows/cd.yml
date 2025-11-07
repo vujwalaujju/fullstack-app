@@ -132,7 +132,7 @@ jobs:
           file: Frontend-Dockerfile
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/fullstack-frontend:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/full-stack-influx-poc/fullstack-frontend:latest
 
       - name: Build & push backend
         uses: docker/build-push-action@v5
@@ -141,7 +141,7 @@ jobs:
           file: Backend-Dockerfile
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/fullstack-backend:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/full-stack-influx-poc/fullstack-backend:latest
 
   deploy:
     needs: [build-frontend, build-backend]
