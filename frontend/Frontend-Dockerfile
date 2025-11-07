@@ -1,24 +1,40 @@
-# FROM node:20-slim AS builder
+# # FROM node:20-slim AS builder
+# # WORKDIR /app
+# # COPY frontend/package*.json ./
+# # COPY frontend/ .
+# # RUN npm ci --only=production
+# # RUN npm run build
+# # FROM nginx:alpine
+# # COPY --from=builder /app/dist /usr/share/nginx/html
+# # EXPOSE 8080
+
+
+# FROM node:20-alpine AS build
+ 
+# # Set working directory inside the container
 # WORKDIR /app
+ 
+# # Copy package.json and package-lock.json
 # COPY frontend/package*.json ./
-# COPY frontend/ .
-# RUN npm ci --only=production
+# COPY frontend /.
+# RUN npm install
 # RUN npm run build
-# FROM nginx:alpine
-# COPY --from=builder /app/dist /usr/share/nginx/html
-# EXPOSE 8080
+# EXPOSE 5050
+ 
+# CMD ['npm', 'run', 'start']
 
 
 FROM node:20-alpine AS build
- 
-# Set working directory inside the container
+
 WORKDIR /app
- 
-# Copy package.json and package-lock.json
+
+
 COPY frontend/package*.json ./
-COPY frontend /.
+COPY frontend/ ./
+COPY frontend/.env .env
 RUN npm install
 RUN npm run build
+
 EXPOSE 5050
- 
-CMD ['npm', 'run', 'start']
+
+CMD ["npm", "run", "start"]
