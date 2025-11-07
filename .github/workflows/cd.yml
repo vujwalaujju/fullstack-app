@@ -132,7 +132,6 @@ jobs:
           file: Frontend-Dockerfile
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/fullstack-frontend:${{ needs.build-frontend.outputs.commit }}
             ${{ secrets.DOCKERHUB_USERNAME }}/fullstack-frontend:latest
 
       - name: Build & push backend
@@ -142,7 +141,6 @@ jobs:
           file: Backend-Dockerfile
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/fullstack-backend:${{ needs.build-frontend.outputs.commit }}
             ${{ secrets.DOCKERHUB_USERNAME }}/fullstack-backend:latest
 
   deploy:
