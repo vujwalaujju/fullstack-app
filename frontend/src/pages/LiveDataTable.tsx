@@ -286,7 +286,7 @@ export default function LiveDataTable() {
         />
         <Button
           icon="pi pi-download"
-          label="Export"
+          label="DOWNLOAD CSV"
           onClick={() => dtRef.current?.exportCSV()}
           className="btn"
         />

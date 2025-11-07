@@ -196,7 +196,7 @@ export default function AlarmDataTable() {
         let timeLabel = "Invalid Date";
         try {
           // Input: "2025-11-03 14:30:45"
-          const isoWithT = r.time.replace(" ", "T") + "+05:30"; // Explicit IST
+          const isoWithT = r.time.replace(" ", "T") + "+05:30";
           const date = new Date(isoWithT);
 
           if (!isNaN(date.getTime())) {
@@ -273,7 +273,7 @@ export default function AlarmDataTable() {
         />
         <Button
           icon="pi pi-download"
-          label="Export"
+          label="DOWNLOAD CSV"
           onClick={() => dtRef.current?.exportCSV({ selectionOnly: false })}
           className="btn"
         />
