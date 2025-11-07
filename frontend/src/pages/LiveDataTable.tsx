@@ -8,10 +8,10 @@ import {
   type MultiSelectChangeEvent,
 } from "primereact/multiselect";
 import { Button } from "primereact/button";
-import "../style.css";
+// import "../style.css";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-const API = import.meta.env.VITE_BACKEND_URL || "http://localhost:5296";
+// const API = import.meta.env.VITE_BACKEND_URL || "http://localhost:5296";
 
 type Row = {
   field: "temperature" | "pressure" | "humidity";

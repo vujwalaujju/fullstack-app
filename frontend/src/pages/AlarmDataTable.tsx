@@ -10,7 +10,7 @@ import {
 } from "primereact/multiselect";
 import { Button } from "primereact/button";
 import axios from "axios";
-import "../style.css";
+// import "../style.css";
 
 const API_BASE = "http://localhost:5296/api/sqlite";
 
