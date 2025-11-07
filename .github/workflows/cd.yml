@@ -99,7 +99,22 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: backend-build
-          path: $HOME/full_stack_vj_app_/actions-runner/_work/fullstack-app/fullstack-app/backend
+          path: backend
+
+      - name: Create frontend .env
+        run: |
+          echo "VITE_BACKEND_URL=${{ secrets.VITE_BACKEND_URL }}" > frontend/.env
+          echo "VITE_FRONTEND_URL=${{ secrets.VITE_FRONTEND_URL }}" >> frontend/.env
+          echo "VITE_INFLUX_URL=${{ secrets.VITE_INFLUX_URL }}" >> frontend/.env
+
+      - name: Create backend .env
+        run: |
+          cat > backend/.env << EOF
+          INFLUX_URL=${{ secrets.INFLUX_URL }}
+          INFLUX_TOKEN=${{ secrets.INFLUX_TOKEN }}
+          INFLUX_ORG=${{ secrets.INFLUX_ORG }}
+          INFLUX_BUCKET=${{ secrets.INFLUX_BUCKET }}
+          EOF
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
