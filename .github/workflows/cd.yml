@@ -125,15 +125,22 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Validate & Debug Username
+      - name: FINAL DEBUG - Username Check
         run: |
-          USERNAME="${{ secrets.DOCKERHUB_USERNAME }}"
-          if [ -z "$USERNAME" ]; then
-            echo "❌ ERROR: DOCKERHUB_USERNAME is empty or missing!"
+          echo "=== FINAL DEBUG ==="
+          echo "Raw value: '${{ secrets.DOCKERHUB_USERNAME }}'"
+          echo "Length: ${#DOCKERHUB_USERNAME}"
+          echo "Hex dump (to catch spaces):"
+          echo "${{ secrets.DOCKERHUB_USERNAME }}" | hexdump -C
+          if [ "${{ secrets.DOCKERHUB_USERNAME }}" = "vujwalamaddula" ]; then
+            echo "SUCCESS: Username is correct"
+          else
+            echo "ERROR: Username is NOT 'vujwalamaddula'"
+            echo "Got: '${{ secrets.DOCKERHUB_USERNAME }}'"
             exit 1
           fi
-          echo "✅ Username validated (length: ${#USERNAME})"
-          echo "Tag preview: $USERNAME/fullstack-frontend:test"
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
 
       - name: Build & push frontend
         uses: docker/build-push-action@v5
