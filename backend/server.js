@@ -16,11 +16,12 @@ app.use(
       "http://localhost:3000",
 
       "http://localhost:3001",
-      "http://localhost:5055",
       "http://localhost:5174",
       "http://localhost:5173",
+      "http://10.188.10.151:3001",
       "http://10.188.10.151:5174",
       "http://10.188.10.151:5173",
+      "http://10.188.10.151:5172",
     ],
     credentials: true,
   })
