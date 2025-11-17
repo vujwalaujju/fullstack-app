@@ -1,15 +1,26 @@
-FROM node:20-alpine AS build
+# FROM node:20-alpine AS build
 
+# WORKDIR /app
+
+
+# COPY frontend/package*.json ./
+# COPY frontend/ ./
+# COPY frontend/.env .env
+# RUN npm install
+# RUN npm run build
+
+# EXPOSE 5172
+
+# CMD ["npm", "run", "start"]
+
+FROM node:20-alpine AS builder
 WORKDIR /app
-
-
 COPY frontend/package*.json ./
 COPY frontend/ ./
 COPY frontend/.env .env
 RUN npm install
 RUN npm run build
-
-EXPOSE 5172
-
-CMD ["npm", "run", "start"]
-# CMD ["npm", "run", "preview", "--", "--host", "0.0.0.0"]
+FROM nginx:alpine
+COPY --from=builder /app/build /usr/share/nginx/html
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
