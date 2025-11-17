@@ -1,9 +1,6 @@
 services:
   backend:
     image: ${DOCKERHUB_USERNAME}/fullstack-backend:${TAG:-latest}
-    build:
-      context: .
-      dockerfile: backend/Backend-Dockerfile
     restart: unless-stopped
     ports:
       - "3001:3001"
@@ -15,9 +12,6 @@ services:
 
   frontend:
     image: ${DOCKERHUB_USERNAME}/fullstack-frontend:${TAG:-latest}
-    build:
-      context: .
-      dockerfile: frontend/Frontend-Dockerfile
     restart: unless-stopped
     ports:
       - "80:5050"

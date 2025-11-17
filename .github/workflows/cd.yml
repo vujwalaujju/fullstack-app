@@ -166,7 +166,7 @@ jobs:
           VITE_INFLUX_URL=${{ secrets.VITE_INFLUX_URL }}
 
           INFLUX_URL=${{ secrets.INFLUX_URL }}
-          INFLUX_TOKEN=${{ secrets.INFLUX_TOKEN }}
+          INFLUX_TOKEN=${{ secrets.INFLUX_TOKEN }}//;
           INFLUX_ORG=${{ secrets.INFLUX_ORG }}
           INFLUX_BUCKET=${{ secrets.INFLUX_BUCKET }}
           EOF
