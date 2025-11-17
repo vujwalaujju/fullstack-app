@@ -3,7 +3,7 @@ services:
     image: ${DOCKERHUB_USERNAME}/fullstack-backend:${TAG:-latest}
     restart: unless-stopped
     ports:
-      - "3001:3001"
+      - "3000:3001"
     environment:
       - INFLUX_URL=${INFLUX_URL}
       - INFLUX_TOKEN=${INFLUX_TOKEN}
@@ -14,7 +14,7 @@ services:
     image: ${DOCKERHUB_USERNAME}/fullstack-frontend:${TAG:-latest}
     restart: unless-stopped
     ports:
-      - "80:5050"
+      - "80:5172"
     environment:
       - VITE_BACKEND_URL=${VITE_BACKEND_URL}
       - VITE_FRONTEND_URL=${VITE_FRONTEND_URL}
