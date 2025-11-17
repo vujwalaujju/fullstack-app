@@ -14,7 +14,7 @@ services:
     image: ${DOCKERHUB_USERNAME}/fullstack-frontend:${TAG:-latest}
     restart: unless-stopped
     ports:
-      - "80:5172"
+      - "5172:80"
     environment:
       - VITE_BACKEND_URL=${VITE_BACKEND_URL}
       - VITE_FRONTEND_URL=${VITE_FRONTEND_URL}
