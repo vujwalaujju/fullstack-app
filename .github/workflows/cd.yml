@@ -143,6 +143,50 @@ jobs:
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/fullstack-backend:latest
 
+  docker-deploy:
+    needs: docker-build-push
+    runs-on: self-hosted
+    environment: production
+    env:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      TAG: ${{ secrets.DEPLOY_TAG || 'latest' }}
+
+    steps:
+      - name: Checkout code (for docker-compose.yml)
+        uses: actions/checkout@v4
+
+      - name: Create deployment .env
+        run: |
+          cat > .env << EOF
+          DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
+          TAG=${TAG}
+
+          VITE_BACKEND_URL=${{ secrets.VITE_BACKEND_URL }}
+          VITE_FRONTEND_URL=${{ secrets.VITE_FRONTEND_URL }}
+          VITE_INFLUX_URL=${{ secrets.VITE_INFLUX_URL }}
+
+          INFLUX_URL=${{ secrets.INFLUX_URL }}
+          INFLUX_TOKEN=${{ secrets.INFLUX_TOKEN }}
+          INFLUX_ORG=${{ secrets.INFLUX_ORG }}
+          INFLUX_BUCKET=${{ secrets.INFLUX_BUCKET }}
+          EOF
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Pull & Deploy
+        run: |
+          echo "Deploying with tag: $TAG"
+          docker compose --env-file .env pull
+          docker compose --env-file .env up -d --remove-orphans
+
+      - name: Show status
+        run: |
+          docker compose ps
+          echo "Deployment successful!"
   deploy:
     needs: [build-frontend, build-backend]
     runs-on: self-hosted
