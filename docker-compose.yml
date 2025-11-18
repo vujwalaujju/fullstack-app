@@ -3,9 +3,9 @@ services:
     image: ${DOCKERHUB_USERNAME}/fullstack-backend:${TAG:-latest}
     restart: unless-stopped
     ports:
-      - "3000:3001"
+      - "5296:5296"
     environment:
-      - INFLUX_URL=${INFLUX_URL}
+      - INFLUX_URL=ttp://10.188.10.151:8086
       - INFLUX_TOKEN=${INFLUX_TOKEN}
       - INFLUX_ORG=${INFLUX_ORG}
       - INFLUX_BUCKET=${INFLUX_BUCKET}
