@@ -29,11 +29,8 @@ app.use(
       "http://10.188.10.151:5172",
     ],
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
-app.options("*", cors());
 app.use(express.json());
 app.use(express.static("public"));
 
