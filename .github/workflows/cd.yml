@@ -8,79 +8,79 @@ on:
       - Full-stack-Influx-POC
 
 jobs:
-  # build-frontend:
-  #   runs-on: self-hosted
+  build-frontend:
+    runs-on: self-hosted
 
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-  #     - name: Set up Node.js
-  #       uses: actions/setup-node@v4
-  #       with:
-  #         node-version: "20"
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
 
-  #     - name: Cache frontend dependencies
-  #       uses: actions/cache@v4
-  #       with:
-  #         path: frontend/node_modules
-  #         key: ${{ runner.os }}-frontend-${{ hashFiles('frontend/package-lock.json') }}
-  #         restore-keys: |
-  #           ${{ runner.os }}-frontend-
+      - name: Cache frontend dependencies
+        uses: actions/cache@v4
+        with:
+          path: frontend/node_modules
+          key: ${{ runner.os }}-frontend-${{ hashFiles('frontend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-frontend-
 
-  #     - name: Install frontend dependencies
-  #       run: |
-  #         cd frontend
-  #         npm ci
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          npm ci
 
-  #     - name: Create .env file
-  #       run: |
-  #         cd frontend
-  #         echo "VITE_BACKEND_URL=${{ secrets.VITE_BACKEND_URL }}" >> .env
-  #         echo "VITE_FRONTEND_URL=${{ secrets.VITE_FRONTEND_URL }}" >> .env
-  #         echo "VITE_INFLUX_URL=${{ secrets.VITE_INFLUX_URL }}" >> .env
+      - name: Create .env file
+        run: |
+          cd frontend
+          echo "VITE_BACKEND_URL=${{ secrets.VITE_BACKEND_URL }}" >> .env
+          echo "VITE_FRONTEND_URL=${{ secrets.VITE_FRONTEND_URL }}" >> .env
+          echo "VITE_INFLUX_URL=${{ secrets.VITE_INFLUX_URL }}" >> .env
 
-  #     - name: Build frontend
-  #       run: |
-  #         cd frontend
-  #         npm run build
+      - name: Build frontend
+        run: |
+          cd frontend
+          npm run build
 
-  #     - name: Archive frontend artifacts
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: frontend-build
-  #         path: frontend/build
-  #         retention-days: 7
+      - name: Archive frontend artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: frontend/build
+          retention-days: 7
 
-  # build-backend:
-  # runs-on: self-hosted
-  # steps:
-  #   - name: Checkout code
-  #     uses: actions/checkout@v4
+  build-backend:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-  #   - name: Set up Node.js
-  #     uses: actions/setup-node@v4
-  #     with:
-  #       node-version: "20"
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
 
-  #   - name: Cache backend dependencies
-  #     uses: actions/cache@v4
-  #     with:
-  #       path: backend/node_modules
-  #       key: ${{ runner.os }}-backend-${{ hashFiles('backend/package-lock.json') }}
-  #       restore-keys: |
-  #         ${{ runner.os }}-backend-
-  #   - name: Install backend dependencies
-  #     run: |
-  #       cd backend
-  #       npm install
+      - name: Cache backend dependencies
+        uses: actions/cache@v4
+        with:
+          path: backend/node_modules
+          key: ${{ runner.os }}-backend-${{ hashFiles('backend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-backend-
+      - name: Install backend dependencies
+        run: |
+          cd backend
+          npm install
 
-  #   - name: Archive backend artifacts
-  #     uses: actions/upload-artifact@v4
-  #     with:
-  #       name: backend-build
-  #       path: backend/
-  #       retention-days: 7
+      - name: Archive backend artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-build
+          path: backend/
+          retention-days: 7
 
   docker-build-push:
     needs: [build-frontend, build-backend]
@@ -166,7 +166,7 @@ jobs:
           VITE_INFLUX_URL=${{ secrets.VITE_INFLUX_URL }}
 
           INFLUX_URL=${{ secrets.INFLUX_URL }}
-          INFLUX_TOKEN=${{ secrets.INFLUX_TOKEN }}//;
+          INFLUX_TOKEN=${{ secrets.INFLUX_TOKEN }}
           INFLUX_ORG=${{ secrets.INFLUX_ORG }}
           INFLUX_BUCKET=${{ secrets.INFLUX_BUCKET }}
           EOF
