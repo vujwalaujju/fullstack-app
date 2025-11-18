@@ -33,7 +33,7 @@ type Row = {
   sensor_id?: string;
 };
 
-const API = import.meta.env.VITE_BACKEND_URL || "http://localhost:5296";
+const API = import.meta.env.VITE_BACKEND_URL || "http://10.188.10.151:5296";
 
 const FIELDS = [
   { label: "Temperature", value: "temperature" },
