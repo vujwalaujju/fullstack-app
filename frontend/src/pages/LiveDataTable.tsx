@@ -85,7 +85,7 @@ async function query(
       "http://10.188.10.151:5296/api/influx/query?" + params,
       {
         credentials: "include",
-        mode: "cors",
+        // mode: "cors",
         method: "GET",
       }
     );
