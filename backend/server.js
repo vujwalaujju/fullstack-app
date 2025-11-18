@@ -9,28 +9,7 @@ dotenv.config();
 const app = express();
 const PORT = 5296;
 
-app.use(
-  cors({
-    origin: [
-      "http://localhost:5175",
-      "http://localhost:3000",
-      "http: //10.188.10.151",
-      "http://10.188.10.151:80",
-      "http://localhost",
-      "http://127.0.0.1",
-      "http://localhost:3001",
-      "http://localhost:5174",
-      "http://localhost:5173",
-      "http://10.188.10.151:5296",
-      "http://localhost:5296",
-      "http://10.188.10.151:3001",
-      "http://10.188.10.151:5174",
-      "http://10.188.10.151:5173",
-      "http://10.188.10.151:5172",
-    ],
-    credentials: true,
-  })
-);
+app.use(cors());
 app.use(express.json());
 app.use(express.static("public"));
 
@@ -118,7 +97,7 @@ app.get("/api/influx/latest", async (req, res) => {
     `;
 
     const rows = await queryApi.collectRows(query);
-
+    console.log(rows);
     const result = rows
       .map((r) => ({
         node: r.sensor_id,
